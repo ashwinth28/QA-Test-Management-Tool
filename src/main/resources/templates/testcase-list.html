@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>Test Case List - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --dark-color: #5a5c69;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-title i {
+            font-size: 2rem;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            border-bottom-width: 1px;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            font-weight: 500;
+            border-radius: 8px;
+        }
+
+        .btn-action {
+            margin: 2px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group-action {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-box input {
+            padding-left: 45px;
+            border-radius: 50px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .status-badge {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .status-badge:hover {
+            opacity: 0.8;
+        }
+
+        /* Dropdown menu styles */
+        .dropdown-menu {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 8px 15px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item i {
+            margin-right: 8px;
+            color: #4e73df;
+        }
+
+        .dropdown-item.text-danger i {
+            color: #e74a3b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navigation Bar with Authentication -->
+    <!-- Navigation Bar with Users link for ADMIN -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <!-- USERS LINK - Only visible to ADMIN -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication != null ? #authentication.name : 'Guest'}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Role: <span
+                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
+                                </span>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Page Title -->
+            <div class="page-title">
+                <i class="bi bi-list-check"></i>
+                <h2 class="mb-0">Test Case Management</h2>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row stats-card">
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number" th:text="${totalItems}">0</div>
+                    <div class="stats-label">Total Cases</div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number text-success" id="passedCount" th:text="${passedCount}">0</div>
+                    <div class="stats-label">Passed</div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number text-danger" id="failedCount" th:text="${failedCount}">0</div>
+                    <div class="stats-label">Failed</div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number text-warning" id="blockedCount" th:text="${blockedCount}">0</div>
+                    <div class="stats-label">Blocked</div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number text-secondary" id="pendingCount" th:text="${pendingCount}">0</div>
+                    <div class="stats-label">Pending</div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="stats-number text-info" id="passRate" th:text="${passRate} + '%'">0%</div>
+                    <div class="stats-label">Pass Rate</div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" id="searchInput"
+                                placeholder="Search by ID, Name, Priority..." th:value="${keyword}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option th:each="status : ${statuses}" th:value="${status.name()}"
+                                th:text="${status.displayName}"
+                                th:selected="${selectedStatus?.name() == status.name()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="priorityFilter">
+                            <option value="">All Priorities</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="applyFilters()">
+                            <i class="bi bi-funnel"></i> Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="text-muted">Showing <span th:text="${#lists.size(testcases)}"></span>
+                            entries</span>
+                    </div>
+                    <div>
+                        <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                            href="/testcases/new" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg"></i> New Test Case
+                        </a>
+                        <a href="/testcases/export" class="btn btn-success btn-sm">
+                            <i class="bi bi-file-excel"></i> Export All
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover" id="testCaseTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Test Case ID</th>
+                                <th>Name</th>
+                                <th>Priority</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                                <th>History</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tc : ${testcases}" th:data-id="${tc.id}" th:data-status="${tc.status.name()}"
+                                th:data-priority="${tc.priority}">
+                                <td th:text="${tc.id}"></td>
+                                <td th:text="${tc.testCaseId}"></td>
+                                <td th:text="${tc.testCaseName}"></td>
+                                <td>
+                                    <span th:classappend="|badge bg-${tc.priority == 'High' ? 'danger' : 
+                                                                   tc.priority == 'Medium' ? 'warning' : 
+                                                                   tc.priority == 'Low' ? 'info' : 
+                                                                   'dark'}|" th:text="${tc.priority}">
+                                    </span>
+                                </td>
+                                <td th:text="${tc.testType}"></td>
+                                <td class="status-cell">
+                                    <span class="badge" th:classappend="|bg-${tc.status.bootstrapClass}|"
+                                        th:text="${tc.status.displayName}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group-action">
+                                        <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                                            th:href="@{/testcases/execute/{id}(id=${tc.id})}"
+                                            class="btn btn-primary btn-sm btn-action" title="Execute">
+                                            <i class="bi bi-play-fill"></i>
+                                        </a>
+                                        <button
+                                            th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                                            class="btn btn-success btn-sm btn-action quick-pass" th:data-id="${tc.id}"
+                                            title="Quick Pass"
+                                            onclick="quickStatusUpdate(this.dataset.id, 'PASS'); return false;">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button
+                                            th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                                            class="btn btn-danger btn-sm btn-action quick-fail" th:data-id="${tc.id}"
+                                            title="Quick Fail"
+                                            onclick="quickStatusUpdate(this.dataset.id, 'FAIL'); return false;">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                        <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                                            th:href="@{/testcases/edit/{id}(id=${tc.id})}"
+                                            class="btn btn-info btn-sm btn-action" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button th:if="${#authorization.expression('hasRole(''ADMIN'')')}"
+                                            class="btn btn-danger btn-sm btn-action delete-testcase"
+                                            th:data-id="${tc.id}" title="Delete"
+                                            onclick="confirmDelete(this.dataset.id); return false;">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a th:href="@{/executions/history/{id}(id=${tc.id})}"
+                                        class="btn btn-secondary btn-sm btn-action" title="View History">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation" th:if="${totalPages > 1}">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/testcases/list(page=${currentPage - 1}, size=${pageSize})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/testcases/list(page=${i}, size=${pageSize})}"
+                                th:text="${i + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/testcases/list(page=${currentPage + 1}, size=${pageSize})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="/dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this test case? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Configuration
+        const WS_URL = '/ws';
+        const TOPIC_UPDATES = '/topic/testcase-updates';
+        const TOPIC_DASHBOARD = '/topic/dashboard-updates';
+
+        // Global variables
+        let stompClient = null;
+        let currentTestCaseId = null;
+        let deleteModal = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeWebSocket();
+            initializeEventListeners();
+            initializeDeleteModal();
+        });
+
+        // WebSocket Connection
+        function initializeWebSocket() {
+            const socket = new SockJS(WS_URL);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected to WebSocket:', frame);
+
+                // Subscribe to test case updates
+                stompClient.subscribe(TOPIC_UPDATES, function (message) {
+                    const update = JSON.parse(message.body);
+                    handleTestCaseUpdate(update);
+                });
+
+                // Subscribe to dashboard updates
+                stompClient.subscribe(TOPIC_DASHBOARD, function (message) {
+                    const dashboardData = JSON.parse(message.body);
+                    updateDashboardMetrics(dashboardData);
+                });
+            }, function (error) {
+                console.error('WebSocket connection error:', error);
+                setTimeout(initializeWebSocket, 5000);
+            });
+        }
+
+        // Handle test case updates
+        function handleTestCaseUpdate(update) {
+            const row = document.querySelector(`tr[data-id="${update.id}"]`);
+            if (row) {
+                const statusCell = row.querySelector('.status-cell');
+                if (statusCell) {
+                    statusCell.innerHTML = `<span class="badge bg-${update.statusClass}">${update.status}</span>`;
+                }
+                row.setAttribute('data-status', update.status);
+            }
+
+            // Refresh stats after update
+            refreshStats();
+            showNotification(`Test case ${update.testCaseId} updated to ${update.status}`, 'info');
+        }
+
+        // Update dashboard metrics
+        function updateDashboardMetrics(data) {
+            document.getElementById('passedCount').textContent = data.passedCount || data.passed || 0;
+            document.getElementById('failedCount').textContent = data.failedCount || data.failed || 0;
+            document.getElementById('blockedCount').textContent = data.blockedCount || data.blocked || 0;
+            document.getElementById('pendingCount').textContent = data.pendingCount || data.pending || 0;
+
+            const passRate = data.passRate ||
+                (data.passed && data.total ? (data.passed * 100 / data.total).toFixed(1) : '0');
+            document.getElementById('passRate').textContent = passRate + '%';
+        }
+
+        // Refresh stats from server
+        function refreshStats() {
+            fetch('/dashboard/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    updateDashboardMetrics(data);
+                })
+                .catch(error => console.error('Error refreshing stats:', error));
+        }
+
+        // Quick status update
+        function quickStatusUpdate(id, status) {
+            showLoading();
+
+            fetch(`/testcases/status/${id}?status=${status}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return fetch(`/testcases/status/${id}?status=${status}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            }
+                        });
+                    }
+                    return response;
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    showNotification(`Status updated to ${status}`, 'success');
+
+                    // Update the status in the table
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        const statusCell = row.querySelector('.status-cell');
+                        if (statusCell) {
+                            let badgeClass = 'bg-secondary';
+                            if (status === 'PASS') badgeClass = 'bg-success';
+                            else if (status === 'FAIL') badgeClass = 'bg-danger';
+                            else if (status === 'BLOCKED') badgeClass = 'bg-warning';
+                            statusCell.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
+                        }
+                    }
+
+                    // Refresh stats
+                    refreshStats();
+                })
+                .catch(error => {
+                    hideLoading();
+                    showNotification('Error updating status: ' + error.message, 'danger');
+                    console.error('Error:', error);
+                });
+        }
+
+        // Confirm delete
+        function confirmDelete(id) {
+            currentTestCaseId = id;
+            deleteModal.show();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            const priority = document.getElementById('priorityFilter').value;
+
+            const rows = document.querySelectorAll('#testCaseTable tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowStatus = row.dataset.status;
+                const rowPriority = row.dataset.priority;
+
+                const matchesSearch = searchTerm === '' || text.includes(searchTerm.toLowerCase());
+                const matchesStatus = status === '' || rowStatus === status;
+                const matchesPriority = priority === '' || rowPriority === priority;
+
+                if (matchesSearch && matchesStatus && matchesPriority) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            showNotification(`Showing ${visibleCount} test cases`, 'info');
+        }
+
+        // Show/Hide Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+
+            const bgColor = {
+                'success': 'bg-success',
+                'danger': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const icon = {
+                'success': 'bi-check-circle-fill',
+                'danger': 'bi-exclamation-triangle-fill',
+                'warning': 'bi-exclamation-circle-fill',
+                'info': 'bi-info-circle-fill'
+            }[type] || 'bi-info-circle-fill';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                this.remove();
+            });
+        }
+
+        // Delete functionality
+        function initializeDeleteModal() {
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+            document.getElementById('confirmDelete').addEventListener('click', function () {
+                if (currentTestCaseId) {
+                    showLoading();
+
+                    fetch(`/testcases/delete/${currentTestCaseId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok && response.status === 405) {
+                                return fetch(`/testcases/delete/${currentTestCaseId}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    }
+                                });
+                            }
+                            return response;
+                        })
+                        .then(response => {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else {
+                                hideLoading();
+                                deleteModal.hide();
+                                showNotification('Test case deleted successfully', 'success');
+                                setTimeout(() => window.location.reload(), 1000);
+                            }
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            deleteModal.hide();
+                            showNotification('Error deleting test case: ' + error.message, 'danger');
+                            console.error('Error:', error);
+                        });
+                }
+            });
+        }
+
+        // Initialize Event Listeners
+        function initializeEventListeners() {
+            let searchTimeout;
+            document.getElementById('searchInput').addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(applyFilters, 300);
+            });
+
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('priorityFilter').addEventListener('change', applyFilters);
+        }
+
+        /*]]>*/
+    </script>
+</body>
+
+</html>

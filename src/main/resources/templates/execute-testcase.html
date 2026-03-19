@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Execute Test Case - QA Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            --danger-gradient: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            --warning-gradient: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+            --info-gradient: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #343a40;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #4e73df !important;
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            max-width: 900px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h3 {
+            font-weight: 700;
+            color: #4e73df;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .page-title p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .page-title i {
+            font-size: 2.5rem;
+            color: #4e73df;
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label i {
+            margin-right: 5px;
+            color: #4e73df;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #e74a3b;
+            font-weight: bold;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #e74a3b;
+            background-image: none;
+        }
+
+        .form-control.is-invalid:focus,
+        .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 0.2rem rgba(231, 74, 59, 0.25);
+        }
+
+        .readonly-field {
+            background-color: #f8f9fa;
+            border: 2px dashed #4e73df;
+            cursor: default;
+        }
+
+        .readonly-field:focus {
+            border-color: #4e73df;
+            box-shadow: none;
+        }
+
+        .badge-status {
+            font-size: 0.9rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 12px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 35px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-submit i {
+            margin-right: 8px;
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fa;
+            color: #495057;
+            border-color: #4e73df;
+        }
+
+        .btn-cancel i {
+            margin-right: 5px;
+        }
+
+        .error-message {
+            color: #e74a3b;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding-left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error-message i {
+            font-size: 1rem;
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-text i {
+            color: #4e73df;
+        }
+
+        .expected-result-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #4e73df;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .expected-result-box p {
+            margin-bottom: 5px;
+        }
+
+        .expected-result-box .label {
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 8px;
+        }
+
+        .expected-result-box .content {
+            color: #495057;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .test-case-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            width: 120px;
+            color: #495057;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #6c757d;
+        }
+
+        /* Popup message styles */
+        .alert-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            min-width: 400px;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 10px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                top: -100px;
+                opacity: 0;
+            }
+
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            color: white;
+        }
+
+        .alert i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .btn-close-white {
+            filter: brightness(0) invert(1);
+        }
+
+        .card-footer-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .character-count {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .character-count i {
+            margin-right: 3px;
+            color: #4e73df;
+        }
+
+        .info-tooltip {
+            display: inline-block;
+            margin-left: 5px;
+            color: #4e73df;
+            cursor: help;
+        }
+
+        .info-tooltip:hover {
+            color: #764ba2;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4e73df;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+        }
+
+        .form-section:hover {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-title i {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 576px) {
+            .main-card {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+
+            .detail-item {
+                flex-direction: column;
+            }
+
+            .detail-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .card-footer-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+            }
+
+            .page-title h3 {
+                font-size: 1.6rem;
+            }
+
+            .alert-popup {
+                min-width: 90%;
+                left: 5%;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <!-- Navigation Bar with Users link for ADMIN -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <!-- USERS LINK - Only visible to ADMIN -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication != null ? #authentication.name : 'Guest'}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Role: <span
+                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
+                                </span>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Popup Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show alert-popup"
+                role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show alert-popup"
+                role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-title">
+                <i class="bi bi-play-circle"></i>
+                <h3>Execute Test Case</h3>
+                <p>Record the execution results for this test case</p>
+            </div>
+
+            <!-- Test Case Details Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-info-circle"></i> Test Case Information
+                </div>
+                <div class="test-case-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Test Case:</span>
+                        <span class="detail-value" th:text="${testcase.testCaseName}"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Test Case ID:</span>
+                        <span class="detail-value" th:text="${testcase.testCaseId}"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">DB ID:</span>
+                        <span class="detail-value text-primary fw-bold" th:text="${testcase.id}"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Precondition:</span>
+                        <span class="detail-value" th:text="${testcase.precondition} ?: 'None'"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Steps:</span>
+                        <span class="detail-value" th:text="${testcase.testSteps} ?: 'None'"></span>
+                    </div>
+                </div>
+
+                <!-- Expected Result Box -->
+                <div class="expected-result-box">
+                    <div class="label">
+                        <i class="bi bi-eye"></i> Expected Result
+                    </div>
+                    <div class="content" th:text="${testcase.expectedResult} ?: 'No expected result specified'">
+                        Expected result here
+                    </div>
+                </div>
+
+                <!-- Current Status Badge -->
+                <div class="text-center mt-3">
+                    <span class="badge-status" id="statusBadge" th:switch="${testcase.status}">
+                        <span th:case="'PASS'" class="badge bg-success">Pass</span>
+                        <span th:case="'FAIL'" class="badge bg-danger">Fail</span>
+                        <span th:case="'BLOCKED'" class="badge bg-warning text-dark">Blocked</span>
+                        <span th:case="'PENDING'" class="badge bg-secondary">Pending</span>
+                        <span th:case="*" class="badge bg-light text-dark" th:text="${testcase.status}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Execution Form Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-pencil-square"></i> Execution Details
+                </div>
+
+                <!-- SIMPLIFIED FORM - Direct POST without binding -->
+                <form action="/testcases/execute/save" method="post" id="executionForm">
+                    <!-- Pass the test case ID directly -->
+                    <input type="hidden" name="testCaseId" th:value="${testcase.id}" />
+
+                    <!-- Executed By (Mandatory) -->
+                    <div class="mb-4">
+                        <label class="form-label required-field">
+                            <i class="bi bi-person"></i> Executed By
+                            <span class="info-tooltip" data-bs-toggle="tooltip"
+                                title="Name of the person executing this test">
+                                <i class="bi bi-question-circle"></i>
+                            </span>
+                        </label>
+                        <input type="text" name="executedBy" class="form-control" placeholder="Enter your name"
+                            required>
+                        <div class="error-message" id="executedByError"></div>
+                    </div>
+
+                    <!-- Actual Result (Auto-filled from Test Case, Read-only) -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-check-circle"></i> Actual Result
+                            <span class="info-tooltip" data-bs-toggle="tooltip"
+                                title="This value is auto-filled from the test case">
+                                <i class="bi bi-question-circle"></i>
+                            </span>
+                        </label>
+                        <textarea name="actualResult" class="form-control readonly-field" rows="3" readonly
+                            th:text="${testcase.actualResult}"></textarea>
+                        <div class="info-text">
+                            <i class="bi bi-info-circle"></i> This value is auto-filled from the test case and cannot be
+                            edited
+                        </div>
+                    </div>
+
+                    <!-- Expected Results (Mandatory) -->
+                    <div class="mb-4">
+                        <label class="form-label required-field">
+                            <i class="bi bi-clipboard-check"></i> Expected Results
+                            <span class="info-tooltip" data-bs-toggle="tooltip"
+                                title="Enter what you observed during execution">
+                                <i class="bi bi-question-circle"></i>
+                            </span>
+                        </label>
+                        <textarea name="expectedResultVerified" class="form-control" rows="3" id="expectedResults"
+                            placeholder="Enter the expected results for this execution" required></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="expectedResultsCount">0</span>/2000
+                        </div>
+                        <div class="error-message" id="expectedResultsError"></div>
+                    </div>
+
+                    <!-- Status (Mandatory) -->
+                    <div class="mb-4">
+                        <label class="form-label required-field">
+                            <i class="bi bi-flag"></i> Status
+                        </label>
+                        <select name="status" class="form-select" id="statusSelect" required>
+                            <option value="">Select Status</option>
+                            <option th:each="status : ${statuses}" th:value="${status.name()}"
+                                th:text="${status.displayName}">
+                            </option>
+                        </select>
+                        <div class="error-message" id="statusError"></div>
+                    </div>
+
+                    <!-- Remarks (Optional) -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-chat"></i> Remarks
+                        </label>
+                        <textarea name="remarks" class="form-control" rows="2" id="remarks"
+                            placeholder="Additional comments or notes"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="remarksCount">0</span>/1000
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="card-footer-actions">
+                        <a href="/testcases/list" class="btn-cancel">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-submit" onclick="showLoading()">
+                            <i class="bi bi-check-lg"></i> Save Execution
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- WebSocket for real-time updates -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const testcaseId = /*[[${testcase.id}]]*/ 0;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeTooltips();
+            initializeCharacterCounters();
+            initializeWebSocket();
+            initializeFormValidation();
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function () {
+                document.querySelectorAll('.alert').forEach(function (alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function () {
+                        alert.remove();
+                    }, 500);
+                });
+            }, 5000);
+        });
+
+        // Initialize tooltips
+        function initializeTooltips() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // Initialize character counters
+        function initializeCharacterCounters() {
+            const expectedResults = document.getElementById('expectedResults');
+            const remarks = document.getElementById('remarks');
+
+            if (expectedResults) {
+                expectedResults.addEventListener('input', function () {
+                    document.getElementById('expectedResultsCount').textContent = this.value.length;
+                });
+            }
+
+            if (remarks) {
+                remarks.addEventListener('input', function () {
+                    document.getElementById('remarksCount').textContent = this.value.length;
+                });
+            }
+        }
+
+        // Initialize form validation
+        function initializeFormValidation() {
+            const form = document.getElementById('executionForm');
+
+            form.addEventListener('submit', function (e) {
+                let isValid = true;
+
+                // Clear previous errors
+                document.querySelectorAll('.error-message').forEach(el => el.innerHTML = '');
+                document.querySelectorAll('.form-control, .form-select').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+
+                // Validate Executed By
+                const executedBy = document.querySelector('[name="executedBy"]');
+                if (!executedBy.value.trim()) {
+                    showFieldError(executedBy, 'executedByError', 'Executed By is required');
+                    isValid = false;
+                }
+
+                // Validate Expected Results
+                const expectedResults = document.getElementById('expectedResults');
+                if (!expectedResults.value.trim()) {
+                    showFieldError(expectedResults, 'expectedResultsError', 'Expected Results is required');
+                    isValid = false;
+                }
+
+                // Validate Status
+                const status = document.getElementById('statusSelect');
+                if (!status.value) {
+                    showFieldError(status, 'statusError', 'Status is required');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                showLoading();
+            });
+
+            // Remove error on input
+            document.querySelectorAll('.form-control, .form-select').forEach(element => {
+                element.addEventListener('input', function () {
+                    this.classList.remove('is-invalid');
+                    const errorId = this.id + 'Error';
+                    const errorEl = document.getElementById(errorId);
+                    if (errorEl) errorEl.innerHTML = '';
+                });
+            });
+        }
+
+        // Show field error
+        function showFieldError(field, errorId, message) {
+            field.classList.add('is-invalid');
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) {
+                errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + message;
+            }
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            return true;
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // WebSocket Connection
+        function initializeWebSocket() {
+            const socketExec = new SockJS('/ws');
+            const stompExec = Stomp.over(socketExec);
+
+            stompExec.connect({}, function (frame) {
+                console.log('Connected to WebSocket for execution updates');
+
+                stompExec.subscribe('/topic/testcase-updates', function (message) {
+                    const updated = JSON.parse(message.body);
+
+                    if (updated.id == testcaseId) {
+                        showNotification('This test case has been updated by another QA: ' + updated.status, 'warning');
+
+                        // Update status badge
+                        const statusBadge = document.getElementById('statusBadge');
+                        if (statusBadge) {
+                            let badgeClass = 'bg-secondary';
+                            let statusText = updated.status;
+
+                            if (updated.status === 'PASS') badgeClass = 'bg-success';
+                            else if (updated.status === 'FAIL') badgeClass = 'bg-danger';
+                            else if (updated.status === 'BLOCKED') badgeClass = 'bg-warning';
+
+                            statusBadge.className = 'badge ' + badgeClass;
+                            statusBadge.textContent = statusText;
+                        }
+                    }
+                });
+            }, function (error) {
+                console.error('WebSocket connection error:', error);
+                setTimeout(initializeWebSocket, 5000);
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toastId = 'toast-' + Date.now();
+
+            const bgColor = {
+                'success': 'bg-success',
+                'danger': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const icon = {
+                'success': 'bi-check-circle-fill',
+                'danger': 'bi-exclamation-triangle-fill',
+                'warning': 'bi-exclamation-circle-fill',
+                'info': 'bi-info-circle-fill'
+            }[type] || 'bi-info-circle-fill';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+            setTimeout(() => {
+                const toast = document.getElementById(toastId);
+                if (toast) toast.remove();
+            }, 5000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        /*]]>*/
+    </script>
+
+</body>
+
+</html>

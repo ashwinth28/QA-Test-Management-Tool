@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>User Management - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #4e73df !important;
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: #4e73df;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-title i {
+            font-size: 2rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .badge-role {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge-role.ADMIN {
+            background: #4e73df;
+            color: white;
+        }
+
+        .badge-role.TESTER {
+            background: #1cc88a;
+            color: white;
+        }
+
+        .badge-role.VIEWER {
+            background: #858796;
+            color: white;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .status-badge.enabled {
+            background: #1cc88a;
+            color: white;
+        }
+
+        .status-badge.disabled {
+            background: #e74a3b;
+            color: white;
+        }
+
+        .btn-action {
+            border-radius: 8px;
+            padding: 5px 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert {
+            border-radius: 12px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pagination {
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            color: #4e73df;
+        }
+
+        .page-item.active .page-link {
+            background: #4e73df;
+            border-color: #4e73df;
+        }
+
+        @media (max-width: 768px) {
+            .table-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/executions/analytics">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link active" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication.name}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Role: <span
+                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
+                                </span>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Page Title -->
+            <div class="page-title">
+                <i class="bi bi-people"></i>
+                <h2 class="mb-0">User Management</h2>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">
+                        <i class="bi bi-people me-1"></i> Total Users: <span th:text="${totalItems}"
+                            class="fw-bold">0</span>
+                    </span>
+                    <a href="/admin/users/new" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i> New User
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="user : ${users}"
+                                th:classappend="${#authentication.name == user.username} ? 'table-primary'">
+                                <td th:text="${user.id}"></td>
+                                <td th:text="${user.username}"></td>
+                                <td th:text="${user.fullName}"></td>
+                                <td th:text="${user.email}"></td>
+                                <td>
+                                    <span class="badge-role" th:classappend="${user.role}"
+                                        th:text="${user.role.displayName}"></span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" th:classappend="${user.enabled} ? 'enabled' : 'disabled'"
+                                        th:data-id="${user.id}" th:data-enabled="${user.enabled}"
+                                        onclick="toggleUserStatus(this)"
+                                        th:text="${user.enabled} ? 'Active' : 'Inactive'"></span>
+                                </td>
+                                <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></td>
+                                <td>
+                                    <span th:if="${user.lastLogin != null}"
+                                        th:text="${#temporals.format(user.lastLogin, 'yyyy-MM-dd HH:mm')}"></span>
+                                    <span th:if="${user.lastLogin == null}" class="text-muted">Never</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/admin/users/edit/{id}(id=${user.id})}"
+                                            class="btn btn-info btn-action" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button th:unless="${#authentication.name == user.username}"
+                                            class="btn btn-danger btn-action" th:onclick="|deleteUser(${user.id})|"
+                                            title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav th:if="${totalPages > 1}" aria-label="User list pagination" class="mt-4">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/users(page=${currentPage - 1})}">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/admin/users(page=${i})}" th:text="${i + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/users(page=${currentPage + 1})}">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleUserStatus(element) {
+            const userId = element.dataset.id;
+            const wasEnabled = element.dataset.enabled === 'true';
+
+            fetch(`/admin/users/toggle/${userId}`, {
+                method: 'POST'
+            })
+                .then(response => response.text())
+                .then(result => {
+                    if (result === 'cannot-disable-self') {
+                        alert('You cannot disable your own account!');
+                        return;
+                    }
+
+                    if (result === 'enabled') {
+                        element.className = 'status-badge enabled';
+                        element.textContent = 'Active';
+                        element.dataset.enabled = 'true';
+                    } else if (result === 'disabled') {
+                        element.className = 'status-badge disabled';
+                        element.textContent = 'Inactive';
+                        element.dataset.enabled = 'false';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                fetch(`/admin/users/delete/${userId}`, {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    }
+                }).catch(error => console.error('Error:', error));
+            }
+        }
+    </script>
+</body>
+
+</html>

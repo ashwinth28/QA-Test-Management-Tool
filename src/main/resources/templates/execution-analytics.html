@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Execution Analytics - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            --danger-gradient: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            --warning-gradient: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+            max-width: 1400px;
+        }
+
+        .analytics-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+
+        .analytics-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            height: 100%;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #4e73df;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .badge-stat {
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: none;
+            font-weight: 600;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+
+        .progress-bar {
+            border-radius: 5px;
+        }
+
+        .date-range-picker {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/executions/analytics">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-white mb-1">
+                    <i class="bi bi-graph-up"></i> Execution Analytics
+                </h2>
+                <p class="text-white-50 mb-0">Track execution trends and performance metrics</p>
+            </div>
+            <div>
+                <button class="btn btn-light" onclick="refreshAnalytics()">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="date-range-picker">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <strong>Date Range:</strong>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="dateRangeSelect" onchange="changeDateRange()">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="365">Last Year</option>
+                    </select>
+                </div>
+                <div class="col-md-7 text-end">
+                    <span class="text-muted">
+                        <i class="bi bi-calendar3"></i>
+                        <span
+                            th:text="${#temporals.format(#temporals.createNow().minusDays(30), 'MMM dd, yyyy')}"></span>
+                        -
+                        <span th:text="${#temporals.format(#temporals.createNow(), 'MMM dd, yyyy')}"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${weeklyTotal}">0</div>
+                    <div class="stat-label">Weekly Executions</div>
+                    <div class="mt-2">
+                        <span class="badge bg-success" th:text="${weeklyPassed} + ' passed'">0 passed</span>
+                        <span class="badge bg-danger" th:text="${weeklyFailed} + ' failed'">0 failed</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${weeklyPassRate} + '%'">0%</div>
+                    <div class="stat-label">Weekly Pass Rate</div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" th:style="'width: ' + ${weeklyPassRate} + '%'"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${monthlyTotal}">0</div>
+                    <div class="stat-label">Monthly Executions</div>
+                    <div class="mt-2">
+                        <span class="badge bg-success" th:text="${monthlyPassRate} + '% pass rate'">0% pass rate</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${#arrays.length(topExecutors)}">0</div>
+                    <div class="stat-label">Active Testers</div>
+                    <div class="mt-2">
+                        <i class="bi bi-people"></i> Top performers this month
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4">
+            <!-- Daily Trend Chart -->
+            <div class="col-md-8">
+                <div class="analytics-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-calendar-check text-primary"></i> Daily Execution Trend
+                    </h5>
+                    <div class="chart-container">
+                        <canvas id="dailyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div class="col-md-4">
+                <div class="analytics-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-pie-chart text-success"></i> Status Distribution
+                    </h5>
+                    <div class="chart-container">
+                        <canvas id="statusDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Executors and Most Executed Tests -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <div class="analytics-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-trophy text-warning"></i> Top Executors
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tester</th>
+                                    <th>Executions</th>
+                                    <th>Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="executor, stat : ${topExecutors}">
+                                    <td>
+                                        <i class="bi bi-person-circle"></i>
+                                        <span th:text="${executor[0]}">Tester Name</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary" th:text="${executor[1]}">0</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success"
+                                                th:style="'width: ' + (${executor[1]} * 100 / ${weeklyTotal}) + '%'">
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#arrays.length(topExecutors) == 0}">
+                                    <td colspan="3" class="text-center text-muted py-3">
+                                        <i class="bi bi-info-circle"></i> No execution data available
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="analytics-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-bar-chart-steps text-info"></i> Most Executed Test Cases
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Test Case</th>
+                                    <th>Executions</th>
+                                    <th>Last Executed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="test, stat : ${mostExecutedTests}">
+                                    <td>
+                                        <span th:text="${test[0]}">Test Case Name</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary" th:text="${test[1]}">0</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> Today
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#arrays.length(mostExecutedTests) == 0}">
+                                    <td colspan="3" class="text-center text-muted py-3">
+                                        <i class="bi bi-info-circle"></i> No execution data available
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="/dashboard" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Chart instances
+        let dailyTrendChart, statusDistributionChart;
+
+        // Data from server
+        const dailyTrendData = /*[[${dailyTrend}]]*/[];
+        const statusDistributionData = /*[[${statusDistribution}]]*/[];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeCharts();
+        });
+
+        function initializeCharts() {
+            // Daily Trend Chart
+            const dailyCtx = document.getElementById('dailyTrendChart').getContext('2d');
+            dailyTrendChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: dailyTrendData.map(d => d[0]),
+                    datasets: [{
+                        label: 'Executions',
+                        data: dailyTrendData.map(d => d[1]),
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#4e73df',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
+            statusDistributionChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusDistributionData.map(d => d[0]),
+                    datasets: [{
+                        data: statusDistributionData.map(d => d[1]),
+                        backgroundColor: [
+                            '#1cc88a', // Pass
+                            '#e74a3b', // Fail
+                            '#f6c23e', // Blocked
+                            '#858796', // Pending
+                            '#4e73df', // Others
+                            '#36b9cc'  // Skipped
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function changeDateRange() {
+            const days = document.getElementById('dateRangeSelect').value;
+            window.location.href = '/executions/analytics?days=' + days;
+        }
+
+        function refreshAnalytics() {
+            location.reload();
+        }
+        /*]]>*/
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recent Executions Fragment</title>
+</head>
+
+<body>
+    <div th:fragment="recentExecutions">
+        <div th:if="${executions != null and not executions.isEmpty()}">
+            <div th:each="exec : ${executions}" class="activity-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong th:text="${exec.executedBy}">Tester</strong>
+                        <span class="badge ms-2" th:classappend="'bg-' + ${exec.status.bootstrapClass}"
+                            th:text="${exec.status.displayName}">Pass</span>
+                    </div>
+                    <small class="activity-time" th:text="${#temporals.format(exec.executedOn, 'HH:mm')}">12:00</small>
+                </div>
+                <div class="small text-muted mt-1">
+                    Test Case: <span th:text="${exec.testCase != null ? exec.testCase.testCaseName : 'Unknown'}">Test
+                        Name</span>
+                </div>
+                <div th:if="${exec.remarks != null and not exec.remarks.isEmpty()}" class="small text-muted mt-1">
+                    <i class="bi bi-chat"></i> <span th:text="${exec.remarks}">Remarks</span>
+                </div>
+            </div>
+        </div>
+        <div th:if="${executions == null or executions.isEmpty()}" class="text-center text-muted py-4">
+            <i class="bi bi-clock-history fs-2"></i>
+            <p class="mt-2">No recent executions found</p>
+        </div>
+    </div>
+</body>
+
+</html>

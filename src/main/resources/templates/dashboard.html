@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>Dashboard - QA Test Management</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            --danger-gradient: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            --warning-gradient: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+            --info-gradient: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #4e73df !important;
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+            max-width: 1400px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover::before {
+            transform: rotate(45deg) translate(10%, 10%);
+        }
+
+        .stat-card.passed {
+            background: var(--success-gradient);
+        }
+
+        .stat-card.failed {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.blocked {
+            background: var(--warning-gradient);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-icon {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 3.5rem;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .recent-activity {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #4e73df #f0f0f0;
+        }
+
+        .recent-activity::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .recent-activity::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .recent-activity::-webkit-scrollbar-thumb {
+            background: #4e73df;
+            border-radius: 10px;
+        }
+
+        .activity-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .activity-item:hover {
+            background: #f8f9fa;
+        }
+
+        .activity-time {
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        .last-updated {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .refresh-btn {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .quick-action-btn {
+            padding: 15px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: white;
+            display: block;
+            text-align: center;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4e73df;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .metric-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .trend-up {
+            color: #1cc88a;
+            font-weight: 600;
+        }
+
+        .trend-down {
+            color: #e74a3b;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Dropdown menu styles */
+        .dropdown-menu {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 8px 15px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item i {
+            margin-right: 8px;
+            color: #4e73df;
+        }
+
+        .dropdown-item.text-danger i {
+            color: #e74a3b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navigation Bar with Authentication -->
+    <!-- Navigation Bar with Users link for ADMIN -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/executions/analytics">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                    </li>
+                    <!-- USERS LINK - Only visible to ADMIN -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication != null ? #authentication.name : 'Guest'}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Role: <span
+                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
+                                </span>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-white mb-1">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </h2>
+                <p class="text-white-50 mb-0">Welcome back! Here's your test execution summary</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-white last-updated">
+                    <i class="bi bi-clock"></i> Last Updated: <span th:text="${lastUpdated}"
+                        id="lastUpdatedTime"></span>
+                </span>
+                <button class="btn btn-light" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-repeat" id="refreshIcon"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards Row -->
+        <div class="row g-4">
+            <!-- Total Test Cases -->
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <i class="bi bi-files stat-icon"></i>
+                    <div class="stat-number" th:text="${totalTestCases}" id="totalCases">0</div>
+                    <div class="stat-label">Total Test Cases</div>
+                    <div class="mt-2">
+                        <span class="metric-badge">
+                            <i class="bi bi-arrow-up"></i> <span th:text="${recentExecutions}"
+                                id="recentExecutions">0</span> this week
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Passed Tests -->
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card passed">
+                    <i class="bi bi-check-circle stat-icon"></i>
+                    <div class="stat-number" th:text="${passedTests}" id="passedTests">0</div>
+                    <div class="stat-label">Passed</div>
+                    <div class="mt-2">
+                        <span class="metric-badge">
+                            <i class="bi bi-check-circle-fill"></i> Pass Rate: <span th:text="${passRate}"
+                                id="passRate">0</span>%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Failed Tests -->
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card failed">
+                    <i class="bi bi-x-circle stat-icon"></i>
+                    <div class="stat-number" th:text="${failedTests}" id="failedTests">0</div>
+                    <div class="stat-label">Failed</div>
+                    <div class="mt-2">
+                        <span class="metric-badge">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Needs attention
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blocked Tests -->
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card blocked">
+                    <i class="bi bi-exclamation-triangle stat-icon"></i>
+                    <div class="stat-number" th:text="${blockedTests}" id="blockedTests">0</div>
+                    <div class="stat-label">Blocked</div>
+                    <div class="mt-2">
+                        <span class="metric-badge">
+                            <i class="bi bi-clock-history"></i> <span th:text="${pendingTests}"
+                                id="pendingTests">0</span> pending
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mt-4 g-4">
+            <!-- Status Distribution Chart -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pie-chart text-primary"></i> Status Distribution
+                        </h5>
+                        <span class="badge bg-primary" id="totalCasesBadge" th:text="${totalTestCases}">0</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="mt-3" id="statusLegend">
+                        <!-- Dynamic legend will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Distribution Chart -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart text-success"></i> Priority Distribution
+                        </h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                    <div class="mt-3" id="priorityLegend">
+                        <!-- Dynamic legend will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pass Rate Gauge -->
+            <div class="col-xl-4 col-lg-12">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-speedometer2 text-info"></i> Overall Pass Rate
+                        </h5>
+                        <span class="badge bg-info" th:text="${passRate} + '%'" id="passRateBadge">0%</span>
+                    </div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="passRateChart"></canvas>
+                    </div>
+                    <div class="row mt-3 text-center">
+                        <div class="col-6">
+                            <div class="text-success">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span class="fw-bold" th:text="${passedTests}" id="passCount">0</span>
+                            </div>
+                            <small class="text-muted">Passed</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-danger">
+                                <i class="bi bi-x-circle-fill"></i>
+                                <span class="fw-bold" th:text="${totalTestCases - passedTests}"
+                                    id="nonPassCount">0</span>
+                            </div>
+                            <small class="text-muted">Non-Passed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Trends and Recent Activity -->
+        <div class="row mt-4 g-4">
+            <!-- Daily Execution Trend -->
+            <div class="col-xl-8">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up text-warning"></i> Daily Executions (Last 7 Days)
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active"
+                                onclick="changeChartPeriod(7)">7D</button>
+                            <button type="button" class="btn btn-outline-primary"
+                                onclick="changeChartPeriod(14)">14D</button>
+                            <button type="button" class="btn btn-outline-primary"
+                                onclick="changeChartPeriod(30)">30D</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="col-xl-4">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history text-info"></i> Recent Activity
+                        </h5>
+                        <span class="badge bg-info" id="activityCount">0</span>
+                    </div>
+                    <div class="recent-activity" id="recentActivity">
+                        <div class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading recent activities...</p>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="/executions/analytics" class="btn btn-outline-primary btn-sm">
+                            View All Activities <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-lightning-charge text-warning"></i> Quick Actions
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                            <a href="/testcases/new" class="quick-action-btn"
+                                style="background: var(--primary-gradient);">
+                                <i class="bi bi-plus-circle fs-2"></i>
+                                <div class="fw-bold mt-2">New Test Case</div>
+                                <small>Create test case</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="/testcases/list" class="quick-action-btn"
+                                style="background: var(--success-gradient);">
+                                <i class="bi bi-list-check fs-2"></i>
+                                <div class="fw-bold mt-2">View All</div>
+                                <small>Manage test cases</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                            <a href="/upload" class="quick-action-btn" style="background: var(--info-gradient);">
+                                <i class="bi bi-cloud-upload fs-2"></i>
+                                <div class="fw-bold mt-2">Upload Excel</div>
+                                <small>Bulk import</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="/executions/analytics" class="quick-action-btn"
+                                style="background: var(--warning-gradient);">
+                                <i class="bi bi-graph-up fs-2"></i>
+                                <div class="fw-bold mt-2">Analytics</div>
+                                <small>Detailed reports</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <span class="fw-bold ms-2">System Status</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success" id="systemStatus">Operational</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted d-block">Database</small>
+                            <span class="fw-bold text-success" id="dbStatus">
+                                <i class="bi bi-check-circle-fill"></i> Connected
+                            </span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted d-block">WebSocket</small>
+                            <span class="fw-bold text-success" id="wsStatus">
+                                <i class="bi bi-check-circle-fill"></i> Connected
+                            </span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted d-block">Active Users</small>
+                            <span class="fw-bold" id="activeUsers">1</span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted d-block">Uptime</small>
+                            <span class="fw-bold" id="uptime">Calculating...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Configuration
+        const WS_URL = '/ws';
+        const TOPIC_DASHBOARD = '/topic/dashboard-updates';
+        const TOPIC_NOTIFICATIONS = '/topic/notifications';
+
+        // Chart instances
+        let statusChart, priorityChart, passRateChart, dailyChart;
+
+        // WebSocket client
+        let stompClient = null;
+
+        // Chart period
+        let currentChartPeriod = 7;
+
+        // Dashboard data
+        let dashboardData = {
+            total: /*[[${totalTestCases}]]*/ 0,
+            passed: /*[[${passedTests}]]*/ 0,
+            failed: /*[[${failedTests}]]*/ 0,
+            blocked: /*[[${blockedTests}]]*/ 0,
+            pending: /*[[${pendingTests}]]*/ 0,
+            passRate: /*[[${passRate}]]*/ 0,
+            statusDistribution: /*[[${statusDistribution}]]*/ {},
+            priorityDistribution: /*[[${priorityDistribution}]]*/ {},
+            dailyExecutions: /*[[${dailyExecutions}]]*/[]
+        };
+
+        // System uptime tracking
+        const startTime = new Date();
+
+        // Document ready
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeCharts();
+            initializeWebSocket();
+            loadRecentActivity();
+            initializeEventListeners();
+            startUptimeCounter();
+            checkSystemHealth();
+        });
+
+        // Initialize Charts
+        function initializeCharts() {
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(dashboardData.statusDistribution),
+                    datasets: [{
+                        data: Object.values(dashboardData.statusDistribution),
+                        backgroundColor: [
+                            '#1cc88a', // Pass
+                            '#e74a3b', // Fail
+                            '#f6c23e', // Blocked
+                            '#858796', // Pending
+                            '#4e73df', // Active
+                            '#36b9cc'  // Others
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Priority Distribution Chart
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            priorityChart = new Chart(priorityCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dashboardData.priorityDistribution),
+                    datasets: [{
+                        label: 'Number of Test Cases',
+                        data: Object.values(dashboardData.priorityDistribution),
+                        backgroundColor: [
+                            '#e74a3b', // Critical
+                            '#f6c23e', // High
+                            '#4e73df', // Medium
+                            '#1cc88a', // Low
+                            '#858796'  // Others
+                        ],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pass Rate Chart
+            const passRateCtx = document.getElementById('passRateChart').getContext('2d');
+            passRateChart = new Chart(passRateCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Others'],
+                    datasets: [{
+                        data: [dashboardData.passRate, 100 - dashboardData.passRate],
+                        backgroundColor: ['#1cc88a', '#e74a3b'],
+                        borderWidth: 0,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.raw.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Daily Chart - FIXED with null check
+            updateDailyChart(dashboardData.dailyExecutions);
+        }
+
+        // Update Daily Chart - FIXED with proper error handling
+        function updateDailyChart(data) {
+            const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+
+            // Destroy existing chart if it exists
+            if (dailyChart) {
+                dailyChart.destroy();
+            }
+
+            // Default empty data if data is not valid
+            let chartData = [];
+            let chartLabels = [];
+
+            // Check if data exists and is an array
+            if (data && Array.isArray(data) && data.length > 0) {
+                chartLabels = data.map(d => d[0] || '');
+                chartData = data.map(d => d[1] || 0);
+            } else {
+                // Provide fallback data
+                console.log('No daily execution data available, using fallback');
+                const last7Days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    chartLabels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                    chartData.push(0);
+                }
+            }
+
+            dailyChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Executions',
+                        data: chartData,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#4e73df',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // WebSocket Connection
+        function initializeWebSocket() {
+            const socket = new SockJS(WS_URL);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected to WebSocket:', frame);
+                updateWebSocketStatus(true);
+
+                // Subscribe to dashboard updates
+                stompClient.subscribe(TOPIC_DASHBOARD, function (message) {
+                    const data = JSON.parse(message.body);
+                    updateDashboard(data);
+                });
+
+                // Subscribe to notifications
+                stompClient.subscribe(TOPIC_NOTIFICATIONS, function (message) {
+                    const notification = JSON.parse(message.body);
+                    showNotification(notification.message, notification.type);
+                });
+
+            }, function (error) {
+                console.error('WebSocket connection error:', error);
+                updateWebSocketStatus(false);
+                setTimeout(initializeWebSocket, 5000);
+            });
+        }
+
+        // Update Dashboard with real-time data
+        function updateDashboard(data) {
+            // Update numbers
+            document.getElementById('totalCases').textContent = data.totalTestCases || data.total || 0;
+            document.getElementById('passedTests').textContent = data.passedCount || data.passed || 0;
+            document.getElementById('failedTests').textContent = data.failedCount || data.failed || 0;
+            document.getElementById('blockedTests').textContent = data.blockedCount || data.blocked || 0;
+            document.getElementById('pendingTests').textContent = data.pendingCount || data.pending || 0;
+
+            const passRate = data.passRate ||
+                (data.passed && data.total ? (data.passed * 100 / data.total).toFixed(1) : 0);
+            document.getElementById('passRate').textContent = passRate;
+            document.getElementById('passRateBadge').textContent = passRate + '%';
+            document.getElementById('passCount').textContent = data.passedCount || data.passed || 0;
+            document.getElementById('nonPassCount').textContent =
+                ((data.totalTestCases || data.total || 0) - (data.passedCount || data.passed || 0));
+            document.getElementById('totalCasesBadge').textContent = data.totalTestCases || data.total || 0;
+
+            // Update charts if new distribution data available
+            if (data.statusDistribution) {
+                updateStatusChart(data.statusDistribution);
+            }
+
+            // Update last updated time
+            document.getElementById('lastUpdatedTime').textContent = moment().format('YYYY-MM-DD HH:mm:ss');
+        }
+
+        // Update Status Chart
+        function updateStatusChart(distribution) {
+            statusChart.data.labels = Object.keys(distribution);
+            statusChart.data.datasets[0].data = Object.values(distribution);
+            statusChart.update();
+        }
+
+        // Update WebSocket Status
+        function updateWebSocketStatus(connected) {
+            const wsStatus = document.getElementById('wsStatus');
+            if (connected) {
+                wsStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Connected';
+                wsStatus.className = 'fw-bold text-success';
+            } else {
+                wsStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Disconnected';
+                wsStatus.className = 'fw-bold text-danger';
+            }
+        }
+
+        // Load Recent Activity
+        function loadRecentActivity() {
+            fetch('/executions/recent')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('recentActivity').innerHTML = html;
+                    const activityCount = document.querySelectorAll('#recentActivity .activity-item').length;
+                    document.getElementById('activityCount').textContent = activityCount;
+                })
+                .catch(error => {
+                    console.error('Error loading recent activity:', error);
+                    document.getElementById('recentActivity').innerHTML =
+                        '<div class="text-center text-danger py-4">' +
+                        '<i class="bi bi-exclamation-triangle fs-2"></i>' +
+                        '<p class="mt-2">Error loading activities</p>' +
+                        '</div>';
+                });
+        }
+
+        // Refresh Dashboard
+        function refreshDashboard() {
+            const icon = document.getElementById('refreshIcon');
+            icon.classList.add('refresh-btn');
+            showLoading();
+
+            fetch('/dashboard/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    updateDashboard(data);
+                    loadRecentActivity();
+                    showNotification('Dashboard refreshed successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error refreshing dashboard:', error);
+                    showNotification('Error refreshing dashboard', 'danger');
+                })
+                .finally(() => {
+                    icon.classList.remove('refresh-btn');
+                    hideLoading();
+                });
+        }
+
+        // Change Chart Period - FIXED with error handling
+        function changeChartPeriod(days) {
+            currentChartPeriod = days;
+
+            // Update button states
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show loading
+            showLoading();
+
+            // Fetch new data - FIXED endpoint
+            fetch(`/dashboard/daily-trend?days=${days}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Check if data is valid before updating chart
+                    if (data && Array.isArray(data)) {
+                        updateDailyChart(data);
+                    } else {
+                        console.warn('Received invalid data format for daily trend:', data);
+                        updateDailyChart([]); // Use empty array as fallback
+                        showNotification('No data available for selected period', 'info');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                    showNotification('Error loading chart data', 'danger');
+                    // Use fallback data
+                    updateDailyChart([]);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        // Show/Hide Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+
+            const bgColor = {
+                'success': 'bg-success',
+                'danger': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const icon = {
+                'success': 'bi-check-circle-fill',
+                'danger': 'bi-exclamation-triangle-fill',
+                'warning': 'bi-exclamation-circle-fill',
+                'info': 'bi-info-circle-fill'
+            }[type] || 'bi-info-circle-fill';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                                data-bs-dismiss="toast" onclick="this.closest('.toast').remove()"></button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toast = document.getElementById(toastId);
+                if (toast) toast.remove();
+            }, 5000);
+        }
+
+        // Initialize Event Listeners
+        function initializeEventListeners() {
+            // Auto-refresh every 30 seconds
+            setInterval(refreshDashboard, 30000);
+        }
+
+        // Start Uptime Counter
+        function startUptimeCounter() {
+            setInterval(() => {
+                const uptime = moment.duration(moment().diff(startTime));
+                const hours = Math.floor(uptime.asHours());
+                const minutes = uptime.minutes();
+                document.getElementById('uptime').textContent =
+                    `${hours}h ${minutes}m`;
+            }, 1000);
+        }
+
+        // Check System Health
+        function checkSystemHealth() {
+            fetch('/dashboard/health')
+                .then(response => response.json())
+                .then(data => {
+                    const dbStatus = document.getElementById('dbStatus');
+                    const systemStatus = document.getElementById('systemStatus');
+
+                    if (data.database === 'CONNECTED') {
+                        dbStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Connected';
+                        dbStatus.className = 'fw-bold text-success';
+                        systemStatus.textContent = 'Operational';
+                        systemStatus.className = 'badge bg-success';
+                    } else {
+                        dbStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Disconnected';
+                        dbStatus.className = 'fw-bold text-danger';
+                        systemStatus.textContent = 'Degraded';
+                        systemStatus.className = 'badge bg-warning';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking health:', error);
+                });
+        }
+
+        // Export functions for global access
+        window.refreshDashboard = refreshDashboard;
+        window.changeChartPeriod = changeChartPeriod;
+        window.showNotification = showNotification;
+
+        /*]]>*/
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="${action} + ' Test Case'">Create Test Case - QA Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            --danger-gradient: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            --warning-gradient: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+            --info-gradient: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #343a40;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #4e73df !important;
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            max-width: 900px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h3 {
+            font-weight: 700;
+            color: #4e73df;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .page-title p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .page-title i {
+            font-size: 2.5rem;
+            color: #4e73df;
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label i {
+            margin-right: 5px;
+            color: #4e73df;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #e74a3b;
+            font-weight: bold;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #e74a3b;
+            background-image: none;
+        }
+
+        .form-control.is-invalid:focus,
+        .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 0.2rem rgba(231, 74, 59, 0.25);
+        }
+
+        .error-message {
+            color: #e74a3b;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding-left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error-message i {
+            font-size: 1rem;
+        }
+
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px 0 0 12px;
+            color: #4e73df;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 35px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-submit i {
+            margin-right: 8px;
+        }
+
+        .btn-back {
+            background: white;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-back:hover {
+            background: #f8f9fa;
+            color: #495057;
+            border-color: #4e73df;
+        }
+
+        .btn-back i {
+            margin-right: 5px;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+            color: white;
+        }
+
+        .alert i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .btn-close-white {
+            filter: brightness(0) invert(1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-tooltip {
+            display: inline-block;
+            margin-left: 5px;
+            color: #4e73df;
+            cursor: help;
+        }
+
+        .info-tooltip:hover {
+            color: #764ba2;
+        }
+
+        .character-count {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .character-count i {
+            margin-right: 3px;
+        }
+
+        .card-footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        @media (max-width: 576px) {
+            .main-card {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+
+            .card-footer-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-back {
+                width: 100%;
+            }
+
+            .page-title h3 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4e73df;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Hover effects for cards */
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .form-section:hover {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-title i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <!-- Navigation Bar with Users link for ADMIN -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <!-- USERS LINK - Only visible to ADMIN -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication != null ? #authentication.name : 'Guest'}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-shield-lock"></i>
+                                    Role: <span
+                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
+                                </span>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Page Title -->
+            <div class="page-title">
+                <i class="bi bi-clipboard-check"></i>
+                <h3 th:text="${action} + ' Test Case'">Create Test Case</h3>
+                <p>Fill in the details below to create a new test case</p>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+
+            <form th:action="@{/testcases/save}" method="post" th:object="${testCase}" id="testCaseForm">
+                <input type="hidden" th:field="*{id}" />
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-info-circle"></i> Basic Information
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">
+                                <i class="bi bi-upc-scan"></i> Test Case ID
+                                <span class="info-tooltip" data-bs-toggle="tooltip"
+                                    title="Unique identifier for the test case">
+                                    <i class="bi bi-question-circle"></i>
+                                </span>
+                            </label>
+                            <input type="text" th:field="*{testCaseId}" class="form-control"
+                                th:classappend="${#fields.hasErrors('testCaseId')} ? 'is-invalid'"
+                                placeholder="e.g., TC-001" required>
+                            <div class="error-message" th:if="${#fields.hasErrors('testCaseId')}"
+                                th:errors="*{testCaseId}">
+                                <i class="bi bi-exclamation-circle"></i> Error
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">
+                                <i class="bi bi-card-heading"></i> Test Case Name
+                                <span class="info-tooltip" data-bs-toggle="tooltip"
+                                    title="Descriptive name of the test case">
+                                    <i class="bi bi-question-circle"></i>
+                                </span>
+                            </label>
+                            <input type="text" th:field="*{testCaseName}" class="form-control"
+                                th:classappend="${#fields.hasErrors('testCaseName')} ? 'is-invalid'"
+                                placeholder="e.g., Verify login functionality" required>
+                            <div class="error-message" th:if="${#fields.hasErrors('testCaseName')}"
+                                th:errors="*{testCaseName}">
+                                <i class="bi bi-exclamation-circle"></i> Error
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">
+                                <i class="bi bi-flag"></i> Priority
+                            </label>
+                            <select th:field="*{priority}" class="form-select"
+                                th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'" required>
+                                <option value="">Select Priority</option>
+                                <option th:each="priority : ${priorities}" th:value="${priority}" th:text="${priority}">
+                                </option>
+                            </select>
+                            <div class="error-message" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}">
+                                <i class="bi bi-exclamation-circle"></i> Error
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">
+                                <i class="bi bi-tag"></i> Test Type
+                            </label>
+                            <select th:field="*{testType}" class="form-select"
+                                th:classappend="${#fields.hasErrors('testType')} ? 'is-invalid'" required>
+                                <option value="">Select Type</option>
+                                <option th:each="type : ${testTypes}" th:value="${type}" th:text="${type}"></option>
+                            </select>
+                            <div class="error-message" th:if="${#fields.hasErrors('testType')}" th:errors="*{testType}">
+                                <i class="bi bi-exclamation-circle"></i> Error
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Data Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-table"></i> Test Data
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-list-check"></i> Precondition
+                        </label>
+                        <textarea th:field="*{precondition}" class="form-control" rows="2" id="precondition"
+                            placeholder="e.g., User is logged in, Database is connected"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="preconditionCount"
+                                th:inline="text">${testCase.precondition?.length() ?: 0}</span>/1000
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-list-steps"></i> Test Steps
+                        </label>
+                        <textarea th:field="*{testSteps}" class="form-control" rows="4" id="testSteps"
+                            placeholder="1. Navigate to login page&#10;2. Enter username and password&#10;3. Click login button"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="testStepsCount"
+                                th:inline="text">${testCase.testSteps?.length() ?: 0}</span>/5000
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expected Results Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-check2-circle"></i> Expected Results
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-eye"></i> Expected Result
+                        </label>
+                        <textarea th:field="*{expectedResult}" class="form-control" rows="3" id="expectedResult"
+                            placeholder="e.g., User should be redirected to dashboard"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="expectedResultCount"
+                                th:inline="text">${testCase.expectedResult?.length() ?: 0}</span>/2000
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-check-circle"></i> Actual Result
+                        </label>
+                        <textarea th:field="*{actualResult}" class="form-control" rows="3" id="actualResult"
+                            placeholder="e.g., User successfully logged in"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="actualResultCount"
+                                th:inline="text">${testCase.actualResult?.length() ?: 0}</span>/2000
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-chat"></i> Remarks
+                        </label>
+                        <textarea th:field="*{remarks}" class="form-control" rows="2" id="remarks"
+                            placeholder="Additional notes or comments"></textarea>
+                        <div class="character-count">
+                            <i class="bi bi-text-paragraph"></i> <span id="remarksCount"
+                                th:inline="text">${testCase.remarks?.length() ?: 0}</span>/1000
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card-footer-actions">
+                    <a href="/testcases/list" class="btn-back">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                    <button type="submit" class="btn-submit" onclick="showLoading()">
+                        <i class="bi bi-check-lg"></i> <span th:text="${action} + ' Test Case'">Save Test Case</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Character count for textareas
+            function updateCharacterCount(textareaId, countSpanId) {
+                const textarea = document.getElementById(textareaId);
+                const countSpan = document.getElementById(countSpanId);
+
+                if (textarea && countSpan) {
+                    textarea.addEventListener('input', function () {
+                        countSpan.textContent = this.value.length;
+                    });
+                }
+            }
+
+            updateCharacterCount('precondition', 'preconditionCount');
+            updateCharacterCount('testSteps', 'testStepsCount');
+            updateCharacterCount('expectedResult', 'expectedResultCount');
+            updateCharacterCount('actualResult', 'actualResultCount');
+            updateCharacterCount('remarks', 'remarksCount');
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function () {
+                document.querySelectorAll('.alert').forEach(function (alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function () {
+                        alert.remove();
+                    }, 500);
+                });
+            }, 5000);
+        });
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            return true;
+        }
+
+        // Form validation
+        document.getElementById('testCaseForm')?.addEventListener('submit', function (e) {
+            const testCaseId = document.querySelector('[name="testCaseId"]');
+            const testCaseName = document.querySelector('[name="testCaseName"]');
+            const priority = document.querySelector('[name="priority"]');
+            const testType = document.querySelector('[name="testType"]');
+
+            let isValid = true;
+
+            if (!testCaseId.value.trim()) {
+                testCaseId.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!testCaseName.value.trim()) {
+                testCaseName.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!priority.value) {
+                priority.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!testType.value) {
+                testType.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                return false;
+            }
+
+            showLoading();
+        });
+
+        // Remove invalid class on input
+        document.querySelectorAll('.form-control, .form-select').forEach(element => {
+            element.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+            });
+        });
+    </script>
+</body>
+
+</html>

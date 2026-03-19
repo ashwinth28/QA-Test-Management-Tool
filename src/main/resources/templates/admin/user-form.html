@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title th:text="${action} + ' User'">Create User - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            max-width: 600px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h3 {
+            font-weight: 700;
+            color: #4e73df;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .page-title i {
+            font-size: 2.5rem;
+            color: #4e73df;
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-label i {
+            margin-right: 5px;
+            color: #4e73df;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #e74a3b;
+            font-weight: bold;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 35px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-submit i {
+            margin-right: 8px;
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fa;
+            color: #495057;
+            border-color: #4e73df;
+        }
+
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 25px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        @media (max-width: 576px) {
+            .main-card {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+
+            .card-footer-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/executions/analytics">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <!-- Page Title -->
+            <div class="page-title">
+                <i class="bi bi-person-plus"></i>
+                <h3 th:text="${action} + ' User'">Create User</h3>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- User Form -->
+            <form th:action="@{${action == 'Create' ? '/admin/users/save' : '/admin/users/update'}}" method="post"
+                th:object="${user}">
+
+                <input type="hidden" name="id" th:value="*{id}" th:if="${action == 'Edit'}" />
+
+                <div class="mb-3">
+                    <label class="form-label required-field">
+                        <i class="bi bi-person"></i> Username
+                    </label>
+                    <input type="text" th:field="*{username}" class="form-control" th:readonly="${action == 'Edit'}"
+                        placeholder="Enter username" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required-field">
+                        <i class="bi bi-envelope"></i> Email
+                    </label>
+                    <input type="email" th:field="*{email}" class="form-control" placeholder="Enter email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required-field">
+                        <i class="bi bi-card-text"></i> Full Name
+                    </label>
+                    <input type="text" th:field="*{fullName}" class="form-control" placeholder="Enter full name"
+                        required>
+                </div>
+
+                <div class="mb-3" th:if="${action == 'Create'}">
+                    <label class="form-label required-field">
+                        <i class="bi bi-lock"></i> Password
+                    </label>
+                    <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                </div>
+
+                <div class="mb-3" th:if="${action == 'Edit'}">
+                    <label class="form-label">
+                        <i class="bi bi-lock"></i> New Password (leave blank to keep current)
+                    </label>
+                    <input type="password" name="newPassword" class="form-control" placeholder="Enter new password">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required-field">
+                        <i class="bi bi-shield-lock"></i> Role
+                    </label>
+                    <select th:field="*{role}" class="form-select" required>
+                        <option value="">Select Role</option>
+                        <option th:each="role : ${roles}" th:value="${role}" th:text="${role.displayName}"></option>
+                    </select>
+                </div>
+
+                <div class="mb-3 form-check form-switch" th:if="${action == 'Edit'}">
+                    <input type="checkbox" th:field="*{enabled}" class="form-check-input" id="enabled">
+                    <label class="form-check-label" for="enabled">
+                        <i class="bi bi-check-circle"></i> Account Enabled
+                    </label>
+                </div>
+
+                <div class="card-footer-actions">
+                    <a href="/admin/users" class="btn-cancel">
+                        <i class="bi bi-x-lg"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-lg"></i> <span th:text="${action} + ' User'">Create User</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

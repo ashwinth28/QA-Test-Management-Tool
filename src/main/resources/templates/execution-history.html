@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Execution History - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #4e73df, #1cc88a);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-title {
+            color: #4e73df;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .test-case-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stats-badge {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4e73df;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            font-weight: 500;
+        }
+
+        .back-btn {
+            border-radius: 8px;
+            padding: 8px 20px;
+        }
+
+        .trend-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .trend-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .trend-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4e73df;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="d-flex justify-content-between align-items-center page-title">
+                <h2>
+                    <i class="bi bi-clock-history"></i> Execution History
+                </h2>
+                <a href="/testcases/list" class="btn btn-outline-primary back-btn">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <!-- Test Case Information -->
+            <div class="test-case-info" th:if="${testCase != null}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4 th:text="${testCase.testCaseName}">Test Case Name</h4>
+                        <p class="mb-1">
+                            <strong>Test Case ID:</strong> <span th:text="${testCase.testCaseId}">TC-001</span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Current Status:</strong>
+                            <span class="badge" th:classappend="|bg-${testCase.status.bootstrapClass}|"
+                                th:text="${testCase.status.displayName}">Pending</span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Priority:</strong>
+                            <span th:text="${testCase.priority}">High</span>
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-badge">
+                            <div class="stats-number" th:text="${totalExecutions}">0</div>
+                            <div class="text-muted">Total Executions</div>
+                            <div class="mt-2">
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle"></i> Pass Rate: <span th:text="${passRate}"></span>%
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last 7 Days Trend - FIXED: Check if last7Days exists and is not empty -->
+            <div th:if="${last7Days != null and !last7Days.isEmpty()}" class="mb-4">
+                <h5>Last 7 Days Trend</h5>
+                <div class="d-flex gap-3 flex-wrap">
+                    <div th:each="entry : ${last7Days}" class="trend-item">
+                        <div class="trend-date" th:text="${entry.key}">Mon</div>
+                        <div class="trend-count" th:text="${entry.value}">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Distribution - FIXED: Check if statusCounts exists and is not empty -->
+            <div th:if="${statusCounts != null and !statusCounts.isEmpty()}" class="mb-4">
+                <h5>Status Distribution</h5>
+                <div class="d-flex gap-3 flex-wrap">
+                    <div th:each="entry : ${statusCounts}" class="badge" th:classappend="${entry.key == 'Pass' ? 'bg-success' : 
+                                        entry.key == 'Fail' ? 'bg-danger' : 
+                                        entry.key == 'Blocked' ? 'bg-warning text-dark' : 'bg-secondary'}">
+                        <span th:text="${entry.key}">Pass</span>: <span th:text="${entry.value}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latest Execution -->
+            <div th:if="${latestExecution != null}" class="mb-4">
+                <h5>Latest Execution</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Status:</strong>
+                                <span class="badge" th:classappend="|bg-${latestExecution.status.bootstrapClass}|"
+                                    th:text="${latestExecution.status.displayName}">Pass</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Executed By:</strong>
+                                <span th:text="${latestExecution.executedBy}">User</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Executed On:</strong>
+                                <span
+                                    th:text="${#temporals.format(latestExecution.executedOn, 'yyyy-MM-dd HH:mm')}">Date</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Remarks:</strong>
+                                <span th:text="${latestExecution.remarks} ?: 'No remarks'">Remarks</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution History Table -->
+            <h5 class="mb-3">All Executions</h5>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Actual Result</th>
+                            <th>Expected Result Verified</th>
+                            <th>Executed By</th>
+                            <th>Executed On</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="exec, stat : ${executions}" th:classappend="${stat.index == 0} ? 'table-primary'">
+                            <td th:text="${exec.id}"></td>
+                            <td>
+                                <span th:switch="${exec.status}" class="badge" th:classappend="${exec.status == 'PASS' ? 'bg-success' : 
+                                         exec.status == 'FAIL' ? 'bg-danger' : 
+                                         exec.status == 'BLOCKED' ? 'bg-warning text-dark' : 'bg-secondary'}">
+                                    <span th:text="${exec.status.displayName}"></span>
+                                </span>
+                            </td>
+                            <td th:text="${exec.actualResult} ?: '-'">Actual Result</td>
+                            <td th:text="${exec.expectedResultVerified} ?: '-'">Expected Result Verified</td>
+                            <td th:text="${exec.executedBy}">Tester</td>
+                            <td th:text="${#temporals.format(exec.executedOn, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00
+                            </td>
+                            <td th:text="${exec.remarks} ?: '-'">Remarks</td>
+                        </tr>
+
+                        <!-- No Data Row -->
+                        <tr th:if="${#lists.isEmpty(executions)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-info-circle"></i> No execution history found for this test case.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav th:if="${totalPages != null and totalPages > 1}" aria-label="Execution history pages" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                            th:href="@{/executions/history/{id}(id=${testCase.id}, page=${currentPage - 1}, size=10)}">
+                            Previous
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                            th:href="@{/executions/history/{id}(id=${testCase.id}, page=${i}, size=10)}"
+                            th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                        <a class="page-link"
+                            th:href="@{/executions/history/{id}(id=${testCase.id}, page=${currentPage + 1}, size=10)}">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Simple pagination for when there's only one page -->
+            <div th:if="${totalPages != null and totalPages <= 1 and !#lists.isEmpty(executions)}"
+                class="text-center text-muted mt-3">
+                <small>Showing all <span th:text="${totalItems}"></span> executions</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
