@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>Reports - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: #4e73df;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .report-icon.excel {
+            color: #1cc88a;
+        }
+
+        .report-icon.pdf {
+            color: #e74a3b;
+        }
+
+        .report-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .report-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .btn-download {
+            border-radius: 10px;
+            padding: 8px 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-excel {
+            background: #1cc88a;
+            color: white;
+            border: none;
+        }
+
+        .btn-excel:hover {
+            background: #13855c;
+            transform: translateY(-2px);
+        }
+
+        .btn-pdf {
+            background: #e74a3b;
+            color: white;
+            border: none;
+        }
+
+        .btn-pdf:hover {
+            background: #be2617;
+            transform: translateY(-2px);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4e73df;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-card {
+                padding: 20px;
+            }
+
+            .report-card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'TESTER')">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/reports">
+                            <i class="bi bi-file-earmark-text"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication.name}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <div class="page-title">
+                <i class="bi bi-file-earmark-text"></i>
+                <h2 class="mb-0">Reports & Analytics</h2>
+            </div>
+
+            <p class="text-muted mb-4">
+                Download comprehensive reports about your test cases and executions.
+                <br>Reports include test case summary, execution history, and performance metrics.
+            </p>
+
+            <div class="row">
+                <!-- Excel Report Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="report-card">
+                        <div class="report-icon excel">
+                            <i class="bi bi-file-earmark-excel"></i>
+                        </div>
+                        <div class="report-title">Excel Report</div>
+                        <div class="report-description">
+                            Download detailed Excel report with multiple sheets:
+                            <ul class="text-start mt-2">
+                                <li>Test Cases sheet</li>
+                                <li>Executions sheet</li>
+                                <li>Summary sheet with statistics</li>
+                            </ul>
+                        </div>
+                        <a href="/reports/export/excel" class="btn btn-download btn-excel" onclick="showLoading()">
+                            <i class="bi bi-download"></i> Download Excel
+                        </a>
+                    </div>
+                </div>
+
+                <!-- PDF Report Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="report-card">
+                        <div class="report-icon pdf">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                        <div class="report-title">PDF Report</div>
+                        <div class="report-description">
+                            Download professional PDF report including:
+                            <ul class="text-start mt-2">
+                                <li>Executive summary</li>
+                                <li>Priority distribution</li>
+                                <li>Recent test cases</li>
+                                <li>Recent executions</li>
+                            </ul>
+                        </div>
+                        <a href="/reports/export/pdf" class="btn btn-download btn-pdf" onclick="showLoading()">
+                            <i class="bi bi-download"></i> Download PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Note:</strong> Reports include all test cases and executions from the database.
+                <br>Generated reports are ready to share with stakeholders or store for audit purposes.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        // Auto-hide loading after download starts
+        document.querySelectorAll('.btn-download').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+
+</html>
