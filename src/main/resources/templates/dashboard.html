@@ -647,7 +647,7 @@
                         </div>
                         <div class="col-md-3 col-6">
                             <small class="text-muted d-block">Active Users</small>
-                            <span class="fw-bold" id="activeUsers">1</span>
+                            <span class="fw-bold" id="activeUsers">0</span>
                         </div>
                         <div class="col-md-3 col-6">
                             <small class="text-muted d-block">Uptime</small>
@@ -1150,6 +1150,32 @@
         window.showNotification = showNotification;
 
         /*]]>*/
+
+        function updateActiveUsers() {
+            fetch('/dashboard/active-users')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('activeUsers').textContent = data.activeUsers;
+                })
+                .catch(error => console.error('Error fetching active users:', error));
+        }
+
+        // Call it every 10 seconds
+        setInterval(updateActiveUsers, 10000);
+
+        // Also call it on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            updateActiveUsers();
+            // ... existing code ...
+        });
+
+        function updateDashboardMetrics(data) {
+            // ... existing code ...
+
+            // Also refresh active users
+            updateActiveUsers();
+        }
+
     </script>
 </body>
 

@@ -152,4 +152,12 @@ public class TestCaseUpdateService {
             this.lastUpdated = LocalDateTime.now();
         }
     }
+
+    @Autowired
+    private ActiveUserService activeUserService;
+
+    public void sendActiveUsersUpdate() {
+        messagingTemplate.convertAndSend("/topic/active-users",
+                Map.of("activeUsers", activeUserService.getActiveUserCount()));
+    }
 }

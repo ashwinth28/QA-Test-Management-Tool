@@ -5,6 +5,7 @@ import com.qa.testmanagement.model.TestStatus;
 import com.qa.testmanagement.repository.ExecutionRepository;
 import com.qa.testmanagement.repository.TestCaseRepository;
 import com.qa.testmanagement.service.TestCaseUpdateService;
+import com.qa.testmanagement.service.ActiveUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,9 @@ public class DashboardController {
 
         @Autowired
         private SimpMessagingTemplate messagingTemplate;
+
+        @Autowired
+        private ActiveUserService activeUserService; // ADD THIS LINE
 
         @GetMapping("/")
         public String index() {
@@ -90,6 +94,7 @@ public class DashboardController {
                 model.addAttribute("dailyExecutions", dailyExecutions);
                 model.addAttribute("lastUpdated",
                                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                model.addAttribute("activeUsers", activeUserService.getActiveUserCount()); // ADD THIS LINE
 
                 // Trigger a dashboard update via WebSocket (using the service)
                 updateService.sendDashboardUpdate();
@@ -263,6 +268,16 @@ public class DashboardController {
                         response.put("status", "error");
                         response.put("message", e.getMessage());
                 }
+                return response;
+        }
+
+        // Add this method to get active users count
+        @GetMapping("/dashboard/active-users")
+        @ResponseBody
+        public Map<String, Object> getActiveUsers() {
+                Map<String, Object> response = new HashMap<>();
+                response.put("activeUsers", activeUserService.getActiveUserCount());
+                response.put("timestamp", LocalDateTime.now().toString());
                 return response;
         }
 }
