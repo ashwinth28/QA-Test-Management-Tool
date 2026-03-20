@@ -3,9 +3,12 @@
 
 <head>
     <title>Test Case List - QA Test Management</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
     <style>
         :root {
             --primary-color: #4e73df;
@@ -647,14 +650,17 @@
                 .catch(error => console.error('Error refreshing stats:', error));
         }
 
-        // Quick status update
         function quickStatusUpdate(id, status) {
             showLoading();
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
             fetch(`/testcases/status/${id}?status=${status}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
                 }
             })
                 .then(response => {
@@ -672,8 +678,6 @@
                 .then(data => {
                     hideLoading();
                     showNotification(`Status updated to ${status}`, 'success');
-
-                    // Update the status in the table
                     const row = document.querySelector(`tr[data-id="${id}"]`);
                     if (row) {
                         const statusCell = row.querySelector('.status-cell');
@@ -685,8 +689,6 @@
                             statusCell.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
                         }
                     }
-
-                    // Refresh stats
                     refreshStats();
                 })
                 .catch(error => {
@@ -696,7 +698,7 @@
                 });
         }
 
-        // Confirm delete
+        // Confirm delete - FIXED with CSRF token
         function confirmDelete(id) {
             currentTestCaseId = id;
             deleteModal.show();
@@ -781,7 +783,7 @@
             });
         }
 
-        // Delete functionality
+        // Update the delete functionality in initializeDeleteModal
         function initializeDeleteModal() {
             deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
 
@@ -789,31 +791,27 @@
                 if (currentTestCaseId) {
                     showLoading();
 
+                    // Get CSRF token from meta tags
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
                     fetch(`/testcases/delete/${currentTestCaseId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
+                            [csrfHeader]: csrfToken  // Add CSRF token
                         }
                     })
                         .then(response => {
-                            if (!response.ok && response.status === 405) {
-                                return fetch(`/testcases/delete/${currentTestCaseId}`, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
-                                    }
-                                });
-                            }
-                            return response;
-                        })
-                        .then(response => {
                             if (response.redirected) {
                                 window.location.href = response.url;
-                            } else {
+                            } else if (response.ok) {
                                 hideLoading();
                                 deleteModal.hide();
                                 showNotification('Test case deleted successfully', 'success');
                                 setTimeout(() => window.location.reload(), 1000);
+                            } else {
+                                throw new Error('Delete failed with status: ' + response.status);
                             }
                         })
                         .catch(error => {
