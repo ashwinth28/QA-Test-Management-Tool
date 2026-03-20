@@ -936,8 +936,19 @@
             document.getElementById('blockedTests').textContent = data.blockedCount || data.blocked || 0;
             document.getElementById('pendingTests').textContent = data.pendingCount || data.pending || 0;
 
-            const passRate = data.passRate ||
-                (data.passed && data.total ? (data.passed * 100 / data.total).toFixed(1) : 0);
+            // Calculate and round pass rate to 1 decimal place
+            let passRate;
+            if (data.passRate !== undefined && data.passRate !== null) {
+                passRate = data.passRate;
+            } else if (data.passed && data.total) {
+                passRate = (data.passed * 100 / data.total);
+            } else {
+                passRate = 0;
+            }
+
+            // Round to 1 decimal place
+            passRate = Math.round(passRate * 10) / 10;
+
             document.getElementById('passRate').textContent = passRate;
             document.getElementById('passRateBadge').textContent = passRate + '%';
             document.getElementById('passCount').textContent = data.passedCount || data.passed || 0;

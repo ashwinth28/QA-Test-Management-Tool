@@ -7,12 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "test_cases")
@@ -66,6 +64,7 @@ public class TestCase {
 
     @OneToMany(mappedBy = "testCase", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("executedOn DESC")
+    @JsonIgnore // ADD THIS - Prevents circular reference
     private List<Execution> executions = new ArrayList<>();
 
     @PrePersist

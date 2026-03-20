@@ -635,8 +635,10 @@
             document.getElementById('blockedCount').textContent = data.blockedCount || data.blocked || 0;
             document.getElementById('pendingCount').textContent = data.pendingCount || data.pending || 0;
 
-            const passRate = data.passRate ||
-                (data.passed && data.total ? (data.passed * 100 / data.total).toFixed(1) : '0');
+            // Format pass rate to 1 decimal place
+            let passRate = data.passRate || (data.passed && data.total ? (data.passed * 100 / data.total) : 0);
+            passRate = Math.round(passRate * 10) / 10;  // Round to 1 decimal
+
             document.getElementById('passRate').textContent = passRate + '%';
         }
 

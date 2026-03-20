@@ -59,6 +59,9 @@ public class DashboardController {
                 // Calculate pass rate
                 double passRate = totalTestCases > 0 ? (passedTests * 100.0 / totalTestCases) : 0;
 
+                // Format to 1 decimal place
+                String formattedPassRateS = String.format("%.1f", passRate);
+
                 // Recent executions (last 7 days)
                 LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
                 long recentExecutions = executionRepository.countByExecutedOnAfter(weekAgo);
@@ -87,7 +90,7 @@ public class DashboardController {
                 model.addAttribute("failedTests", failedTests);
                 model.addAttribute("blockedTests", blockedTests);
                 model.addAttribute("pendingTests", pendingTests);
-                model.addAttribute("passRate", String.format("%.1f", passRate));
+                model.addAttribute("passRate", formattedPassRateS); // Use formatted value
                 model.addAttribute("recentExecutions", recentExecutions);
                 model.addAttribute("statusDistribution", statusMap);
                 model.addAttribute("priorityDistribution", priorityMap);
@@ -116,6 +119,10 @@ public class DashboardController {
                 long active = testCaseRepository.countByStatus(TestStatus.ACTIVE);
                 long skipped = testCaseRepository.countByStatus(TestStatus.SKIPPED);
 
+                // Round pass rate to 1 decimal place
+                double passRate = total > 0 ? (passed * 100.0 / total) : 0;
+                double roundedPassRate = Math.round(passRate * 10) / 10.0;
+
                 metrics.put("total", total);
                 metrics.put("passed", passed);
                 metrics.put("failed", failed);
@@ -123,7 +130,7 @@ public class DashboardController {
                 metrics.put("pending", pending);
                 metrics.put("active", active);
                 metrics.put("skipped", skipped);
-                metrics.put("passRate", total > 0 ? (passed * 100.0 / total) : 0);
+                metrics.put("passRate", roundedPassRate); // Use rounded value
 
                 // Recent activity
                 LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);

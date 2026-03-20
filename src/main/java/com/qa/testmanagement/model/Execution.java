@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "executions")
 public class Execution {
@@ -15,6 +17,7 @@ public class Execution {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_case_id", nullable = false)
+    @JsonIgnore  // ADD THIS - Prevents circular reference
     private TestCase testCase;
 
     @Enumerated(EnumType.STRING)
