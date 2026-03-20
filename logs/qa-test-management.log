@@ -1301,3 +1301,29 @@ Caused by: java.util.concurrent.RejectedExecutionException: Task org.springframe
 2026-03-21 03:11:15 [restartedMain] INFO  c.q.t.TestmanagementApplication - Starting TestmanagementApplication using Java 17.0.17 with PID 1476 (C:\Program Files\QA Test Management - Project\testmanagement\target\classes started by Antony in C:\Program Files\QA Test Management - Project\testmanagement)
 2026-03-21 03:11:15 [restartedMain] DEBUG c.q.t.TestmanagementApplication - Running with Spring Boot v3.2.1, Spring v6.1.2
 2026-03-21 03:11:15 [restartedMain] INFO  c.q.t.TestmanagementApplication - The following 1 profile is active: "default"
+2026-03-21 03:11:16 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-21 03:11:16 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 19 ms. Found 3 JPA repository interfaces.
+2026-03-21 03:11:16 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-03-21 03:11:16 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-03-21 03:11:16 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.17]
+2026-03-21 03:11:16 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-03-21 03:11:16 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 919 ms
+2026-03-21 03:11:16 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-21 03:11:16 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-19 - Starting...
+2026-03-21 03:11:17 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-19 - Added connection org.postgresql.jdbc.PgConnection@2aabc672
+2026-03-21 03:11:17 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-19 - Start completed.
+2026-03-21 03:11:17 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-21 03:11:17 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-21 03:11:17 [restartedMain] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2026-03-21 03:11:17 [restartedMain] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@6b3ca204, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@6bf881fe, org.springframework.security.web.context.SecurityContextHolderFilter@442e2d98, org.springframework.security.web.header.HeaderWriterFilter@7df5b5f1, org.springframework.web.filter.CorsFilter@361804de, org.springframework.security.web.csrf.CsrfFilter@4acb7121, org.springframework.security.web.authentication.logout.LogoutFilter@38b30545, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@70b3f956, org.springframework.security.web.session.ConcurrentSessionFilter@2e30f141, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@579d3a2, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@4c118db4, org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter@433eb074, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@3924f0, org.springframework.security.web.session.SessionManagementFilter@4e1929bd, org.springframework.security.web.access.ExceptionTranslationFilter@103e8890, org.springframework.security.web.access.intercept.AuthorizationFilter@771fdbe9]
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@88cccc]]
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+2026-03-21 03:11:18 [restartedMain] INFO  c.q.t.TestmanagementApplication - Started TestmanagementApplication in 2.789 seconds (process running for 3522.279)
+2026-03-21 03:11:18 [restartedMain] INFO  o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-03-21 03:11:21 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-21 03:11:21 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-03-21 03:11:21 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms

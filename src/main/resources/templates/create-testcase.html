@@ -502,28 +502,28 @@
                                 <i class="bi bi-exclamation-circle"></i> Error
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Add this after the Test Type field -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="bi bi-folder"></i> Category
-                                </label>
-                                <input type="text" th:field="*{category}" class="form-control"
-                                    placeholder="e.g., Login, Payment, Dashboard">
-                                <div class="info-text">Group test cases by module or feature</div>
-                            </div>
+                    <!-- Category and Tags - Separate row (FIXED: Moved outside the previous row) -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-folder"></i> Category
+                            </label>
+                            <input type="text" th:field="*{category}" class="form-control"
+                                placeholder="e.g., Login, Payment, Dashboard">
+                            <div class="info-text">Group test cases by module or feature</div>
+                        </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="bi bi-tags"></i> Tags
-                                </label>
-                                <input type="text" id="tagsInput" class="form-control"
-                                    placeholder="e.g., Regression, Smoke, Critical (comma separated)">
-                                <input type="hidden" id="tagsHidden" th:field="*{tags}" />
-                                <div class="info-text" id="tagsPreview"></div>
-                                <div class="info-text">Enter tags separated by commas</div>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-tags"></i> Tags
+                            </label>
+                            <input type="text" id="tagsInput" class="form-control"
+                                placeholder="e.g., Regression, Smoke, Critical (comma separated)">
+                            <input type="hidden" id="tagsHidden" th:field="*{tags}" />
+                            <div id="tagsPreview" class="mt-2"></div>
+                            <div class="info-text">Enter tags separated by commas</div>
                         </div>
                     </div>
                 </div>

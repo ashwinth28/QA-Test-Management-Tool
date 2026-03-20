@@ -346,14 +346,14 @@
             <!-- Filter Section -->
             <div class="filter-section">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="search-box">
                             <i class="bi bi-search"></i>
                             <input type="text" class="form-control" id="searchInput"
                                 placeholder="Search by ID, Name, Priority..." th:value="${keyword}">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <select class="form-select" id="statusFilter">
                             <option value="">All Status</option>
                             <option th:each="status : ${statuses}" th:value="${status.name()}"
@@ -362,7 +362,7 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <select class="form-select" id="priorityFilter">
                             <option value="">All Priorities</option>
                             <option value="High">High</option>
@@ -372,8 +372,20 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="tagFilter">
+                            <option value="">All Tags</option>
+                            <option th:each="tag : ${tags}" th:value="${tag}" th:text="${tag}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
                         <button class="btn btn-primary w-100" onclick="applyFilters()">
-                            <i class="bi bi-funnel"></i> Apply Filters
+                            <i class="bi bi-funnel"></i> Filter
                         </button>
                     </div>
                 </div>
@@ -430,27 +442,26 @@
                         <tbody>
                             <tr th:each="tc : ${testcases}" th:data-id="${tc.id}" th:data-status="${tc.status.name()}"
                                 th:data-priority="${tc.priority}">
-                                <td th:text="${tc.id}"></td>
-                                <td th:text="${tc.testCaseId}"></td>
-                                <td th:text="${tc.testCaseName}"></td>
+                                <td th:text="${tc.id}">eu</td>
+                                <td th:text="${tc.testCaseId}">eu</td>
+                                <td th:text="${tc.testCaseName}">eu</td>
                                 <td>
                                     <span th:classappend="|badge bg-${tc.priority == 'High' ? 'danger' : 
-                                                                   tc.priority == 'Medium' ? 'warning' : 
-                                                                   tc.priority == 'Low' ? 'info' : 
-                                                                   'dark'}|" th:text="${tc.priority}">
+                                           tc.priority == 'Medium' ? 'warning' : 
+                                           tc.priority == 'Low' ? 'info' : 
+                                           'dark'}|" th:text="${tc.priority}">
                                     </span>
                                 </td>
-                                <td th:text="${tc.testType}"></td>
-                                <td class="status-cell">
-                                    <span class="badge" th:classappend="|bg-${tc.status.bootstrapClass}|"
-                                        th:text="${tc.status.displayName}">
-                                    </span>
-                                </td>
-                                <!-- In the table body, add after testType -->
+                                <td th:text="${tc.testType}">eu</td>
                                 <td th:text="${tc.category} ?: '-'">-</td>
                                 <td>
                                     <span th:each="tag : ${tc.tags}" class="badge bg-secondary me-1 mb-1"
                                         th:text="${tag}"></span>
+                                </td>
+                                <td class="status-cell">
+                                    <span class="badge" th:classappend="|bg-${tc.status.bootstrapClass}|"
+                                        th:text="${tc.status.displayName}">
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="btn-group-action">
