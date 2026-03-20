@@ -41,4 +41,19 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
         List<Object[]> getPriorityDistribution();
 
         boolean existsByTestCaseId(String testCaseId);
+
+        // Add these methods to TestCaseRepository.java
+
+        @Query("SELECT DISTINCT tc.category FROM TestCase tc WHERE tc.category IS NOT NULL AND tc.category != ''")
+        List<String> findAllCategories();
+
+        @Query("SELECT DISTINCT t FROM TestCase tc JOIN tc.tags t")
+        List<String> findAllTags();
+
+        @Query("SELECT tc FROM TestCase tc WHERE " +
+                        "(:category IS NULL OR tc.category = :category) AND " +
+                        "(:tag IS NULL OR :tag MEMBER OF tc.tags)")
+        Page<TestCase> findByCategoryAndTag(@Param("category") String category,
+                        @Param("tag") String tag,
+                        Pageable pageable);
 }

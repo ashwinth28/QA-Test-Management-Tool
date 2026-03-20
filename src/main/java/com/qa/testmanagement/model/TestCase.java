@@ -5,6 +5,14 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "test_cases")
@@ -63,6 +71,40 @@ public class TestCase {
     @PrePersist
     protected void onCreate() {
         createdOn = LocalDateTime.now();
+    }
+
+    @Column(name = "category")
+    private String category;
+
+    @ElementCollection
+    @CollectionTable(name = "test_case_tags", joinColumns = @JoinColumn(name = "test_case_id"))
+    @Column(name = "tag")
+    private Set<String> tags = new HashSet<>();
+
+    // Add these helper methods
+    @Transient
+    public void setTagsFromString(String tagsJson) {
+        if (tagsJson != null && !tagsJson.isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                this.tags = mapper.readValue(tagsJson, new TypeReference<Set<String>>() {
+                });
+            } catch (Exception e) {
+                // If JSON parsing fails, try comma-separated
+                String[] parts = tagsJson.split(",");
+                this.tags = new HashSet<>();
+                for (String part : parts) {
+                    this.tags.add(part.trim());
+                }
+            }
+        }
+    }
+
+    @Transient
+    public String getTagsAsString() {
+        if (tags == null || tags.isEmpty())
+            return "";
+        return String.join(", ", tags);
     }
 
     // Getters and Setters
@@ -194,5 +236,21 @@ public class TestCase {
     public void removeExecution(Execution execution) {
         executions.remove(execution);
         execution.setTestCase(null);
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 }

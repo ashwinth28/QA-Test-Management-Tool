@@ -379,6 +379,20 @@
                 </div>
             </div>
 
+            <!-- Add after the priority filter -->
+            <div class="col-md-3">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="tagFilter">
+                    <option value="">All Tags</option>
+                    <option th:each="tag : ${tags}" th:value="${tag}" th:text="${tag}"></option>
+                </select>
+            </div>
+
             <!-- Table Container -->
             <div class="table-container">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -406,6 +420,8 @@
                                 <th>Name</th>
                                 <th>Priority</th>
                                 <th>Type</th>
+                                <th>Category</th>
+                                <th>Tags</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                                 <th>History</th>
@@ -429,6 +445,12 @@
                                     <span class="badge" th:classappend="|bg-${tc.status.bootstrapClass}|"
                                         th:text="${tc.status.displayName}">
                                     </span>
+                                </td>
+                                <!-- In the table body, add after testType -->
+                                <td th:text="${tc.category} ?: '-'">-</td>
+                                <td>
+                                    <span th:each="tag : ${tc.tags}" class="badge bg-secondary me-1 mb-1"
+                                        th:text="${tag}"></span>
                                 </td>
                                 <td>
                                     <div class="btn-group-action">

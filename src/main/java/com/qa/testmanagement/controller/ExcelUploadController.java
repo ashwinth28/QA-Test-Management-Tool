@@ -116,6 +116,11 @@ public class ExcelUploadController {
                 testCase.setActualResult(getCellValueAsString(currentRow.getCell(7)));
                 testCase.setRemarks(getCellValueAsString(currentRow.getCell(8)));
 
+                // Expected columns: TestCaseId, Priority, TestType, TestCaseName,
+                // Precondition, TestSteps, ExpectedResult, ActualResult, Remarks, Category, Tags
+                testCase.setCategory(getCellValueAsString(currentRow.getCell(9)));
+                testCase.setTagsFromString(getCellValueAsString(currentRow.getCell(10)));
+
                 // Validate required fields
                 if (testCase.getTestCaseId() != null && !testCase.getTestCaseId().isEmpty() &&
                         testCase.getTestCaseName() != null && !testCase.getTestCaseName().isEmpty()) {

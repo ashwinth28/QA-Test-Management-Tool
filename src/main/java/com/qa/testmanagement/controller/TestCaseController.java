@@ -386,4 +386,45 @@ public class TestCaseController {
         }
         return value;
     }
+
+    @GetMapping("/categories")
+    @ResponseBody
+    public List<String> getAllCategories() {
+        return testCaseRepository.findAllCategories();
+    }
+
+    @GetMapping("/tags")
+    @ResponseBody
+    public List<String> getAllTags() {
+        return testCaseRepository.findAllTags();
+    }
+
+    @GetMapping("/list/filtered")
+    public String listTestCasesFiltered(@RequestParam(required = false) String category,
+            @RequestParam(required = false) String tag,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<TestCase> testCasePage;
+
+        if ((category != null && !category.isEmpty()) || (tag != null && !tag.isEmpty())) {
+            testCasePage = testCaseRepository.findByCategoryAndTag(category, tag, pageable);
+            model.addAttribute("selectedCategory", category);
+            model.addAttribute("selectedTag", tag);
+        } else {
+            testCasePage = testCaseRepository.findAll(pageable);
+        }
+
+        model.addAttribute("testcases", testCasePage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", testCasePage.getTotalPages());
+        model.addAttribute("totalItems", testCasePage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("statuses", TestStatus.values());
+        model.addAttribute("categories", testCaseRepository.findAllCategories());
+        model.addAttribute("tags", testCaseRepository.findAllTags());
+
+        return "testcase-list";
+    }
 }

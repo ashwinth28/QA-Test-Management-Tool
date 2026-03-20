@@ -502,6 +502,29 @@
                                 <i class="bi bi-exclamation-circle"></i> Error
                             </div>
                         </div>
+
+                        <!-- Add this after the Test Type field -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-folder"></i> Category
+                                </label>
+                                <input type="text" th:field="*{category}" class="form-control"
+                                    placeholder="e.g., Login, Payment, Dashboard">
+                                <div class="info-text">Group test cases by module or feature</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-tags"></i> Tags
+                                </label>
+                                <input type="text" id="tagsInput" class="form-control"
+                                    placeholder="e.g., Regression, Smoke, Critical (comma separated)">
+                                <input type="hidden" id="tagsHidden" th:field="*{tags}" />
+                                <div class="info-text" id="tagsPreview"></div>
+                                <div class="info-text">Enter tags separated by commas</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -678,6 +701,34 @@
                 this.classList.remove('is-invalid');
             });
         });
+
+        // Tags handling
+        const tagsInput = document.getElementById('tagsInput');
+        const tagsHidden = document.getElementById('tagsHidden');
+        const tagsPreview = document.getElementById('tagsPreview');
+
+        function updateTags() {
+            const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+            tagsHidden.value = JSON.stringify(tags);
+
+            // Show preview
+            tagsPreview.innerHTML = tags.map(t =>
+                `<span class="badge bg-secondary me-1 mb-1">${t}</span>`
+            ).join('');
+        }
+
+        tagsInput.addEventListener('input', updateTags);
+
+        // Initialize from existing tags
+        if (tagsHidden.value) {
+            try {
+                const existingTags = JSON.parse(tagsHidden.value);
+                if (existingTags && existingTags.length) {
+                    tagsInput.value = existingTags.join(', ');
+                    updateTags();
+                }
+            } catch (e) { }
+        }
     </script>
 </body>
 
