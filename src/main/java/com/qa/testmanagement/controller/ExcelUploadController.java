@@ -14,9 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Controller
 @RequestMapping("/upload")
@@ -59,7 +57,8 @@ public class ExcelUploadController {
                         testCaseRepository.save(testCase);
                         imported++;
                     } else {
-                        // Update existing
+                        // Update existing - preserve created date and don't overwrite category/tags if
+                        // empty
                         updateExistingTestCase(existing, testCase);
                         testCaseRepository.save(existing);
                         updated++;
@@ -94,32 +93,59 @@ public class ExcelUploadController {
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rows = sheet.iterator();
 
-            // Skip header row
-            if (rows.hasNext()) {
-                rows.next();
+            // Read header row to determine column mapping
+            if (!rows.hasNext()) {
+                return testCases;
             }
+
+            Row headerRow = rows.next();
+            Map<String, Integer> columnMap = getColumnMap(headerRow);
 
             while (rows.hasNext()) {
                 Row currentRow = rows.next();
                 TestCase testCase = new TestCase();
 
-                // Expected columns: TestCaseId, Priority, TestType, TestCaseName,
-                // Precondition, TestSteps, ExpectedResult, ActualResult, Remarks
+                // Map columns based on header names
+                testCase.setTestCaseId(
+                        getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("TestCaseId", 0))));
+                testCase.setPriority(getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("Priority", 1))));
+                testCase.setTestType(getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("TestType", 2))));
+                testCase.setTestCaseName(
+                        getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("TestCaseName", 3))));
+                testCase.setPrecondition(
+                        getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("Precondition", 4))));
+                testCase.setTestSteps(getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("TestSteps", 5))));
+                testCase.setExpectedResult(
+                        getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("ExpectedResult", 6))));
+                testCase.setActualResult(
+                        getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("ActualResult", 7))));
+                testCase.setRemarks(getCellValueAsString(currentRow.getCell(columnMap.getOrDefault("Remarks", 8))));
 
-                testCase.setTestCaseId(getCellValueAsString(currentRow.getCell(0)));
-                testCase.setPriority(getCellValueAsString(currentRow.getCell(1)));
-                testCase.setTestType(getCellValueAsString(currentRow.getCell(2)));
-                testCase.setTestCaseName(getCellValueAsString(currentRow.getCell(3)));
-                testCase.setPrecondition(getCellValueAsString(currentRow.getCell(4)));
-                testCase.setTestSteps(getCellValueAsString(currentRow.getCell(5)));
-                testCase.setExpectedResult(getCellValueAsString(currentRow.getCell(6)));
-                testCase.setActualResult(getCellValueAsString(currentRow.getCell(7)));
-                testCase.setRemarks(getCellValueAsString(currentRow.getCell(8)));
+                // Category - only set if column exists and has value
+                Integer categoryCol = columnMap.get("Category");
+                if (categoryCol != null) {
+                    String category = getCellValueAsString(currentRow.getCell(categoryCol));
+                    if (category != null && !category.isEmpty()) {
+                        testCase.setCategory(category);
+                    }
+                }
 
-                // Expected columns: TestCaseId, Priority, TestType, TestCaseName,
-                // Precondition, TestSteps, ExpectedResult, ActualResult, Remarks, Category, Tags
-                testCase.setCategory(getCellValueAsString(currentRow.getCell(9)));
-                testCase.setTagsFromString(getCellValueAsString(currentRow.getCell(10)));
+                // Tags - only set if column exists and has value
+                Integer tagsCol = columnMap.get("Tags");
+                if (tagsCol != null) {
+                    String tagsStr = getCellValueAsString(currentRow.getCell(tagsCol));
+                    if (tagsStr != null && !tagsStr.isEmpty()) {
+                        Set<String> tags = new HashSet<>();
+                        String[] tagArray = tagsStr.split(",");
+                        for (String tag : tagArray) {
+                            String trimmedTag = tag.trim();
+                            if (!trimmedTag.isEmpty()) {
+                                tags.add(trimmedTag);
+                            }
+                        }
+                        testCase.setTags(tags);
+                    }
+                }
 
                 // Validate required fields
                 if (testCase.getTestCaseId() != null && !testCase.getTestCaseId().isEmpty() &&
@@ -130,6 +156,68 @@ public class ExcelUploadController {
         }
 
         return testCases;
+    }
+
+    private Map<String, Integer> getColumnMap(Row headerRow) {
+        Map<String, Integer> columnMap = new HashMap<>();
+
+        for (Cell cell : headerRow) {
+            String headerValue = getCellValueAsString(cell).trim();
+
+            // Map common header variations
+            switch (headerValue.toLowerCase()) {
+                case "testcaseid":
+                case "test case id":
+                case "id":
+                    columnMap.put("TestCaseId", cell.getColumnIndex());
+                    break;
+                case "priority":
+                    columnMap.put("Priority", cell.getColumnIndex());
+                    break;
+                case "testtype":
+                case "test type":
+                case "type":
+                    columnMap.put("TestType", cell.getColumnIndex());
+                    break;
+                case "testcasename":
+                case "test case name":
+                case "name":
+                    columnMap.put("TestCaseName", cell.getColumnIndex());
+                    break;
+                case "precondition":
+                    columnMap.put("Precondition", cell.getColumnIndex());
+                    break;
+                case "teststeps":
+                case "test steps":
+                case "steps":
+                    columnMap.put("TestSteps", cell.getColumnIndex());
+                    break;
+                case "expectedresult":
+                case "expected result":
+                    columnMap.put("ExpectedResult", cell.getColumnIndex());
+                    break;
+                case "actualresult":
+                case "actual result":
+                    columnMap.put("ActualResult", cell.getColumnIndex());
+                    break;
+                case "remarks":
+                case "remark":
+                    columnMap.put("Remarks", cell.getColumnIndex());
+                    break;
+                case "category":
+                case "categories":
+                    columnMap.put("Category", cell.getColumnIndex());
+                    break;
+                case "tags":
+                case "tag":
+                    columnMap.put("Tags", cell.getColumnIndex());
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return columnMap;
     }
 
     private String getCellValueAsString(Cell cell) {
@@ -156,6 +244,7 @@ public class ExcelUploadController {
     }
 
     private void updateExistingTestCase(TestCase existing, TestCase newData) {
+        // Update basic fields
         existing.setPriority(newData.getPriority());
         existing.setTestType(newData.getTestType());
         existing.setTestCaseName(newData.getTestCaseName());
@@ -164,5 +253,17 @@ public class ExcelUploadController {
         existing.setExpectedResult(newData.getExpectedResult());
         existing.setActualResult(newData.getActualResult());
         existing.setRemarks(newData.getRemarks());
+
+        // Update category only if provided in Excel (non-empty)
+        if (newData.getCategory() != null && !newData.getCategory().isEmpty()) {
+            existing.setCategory(newData.getCategory());
+        }
+        // If category is empty in Excel, DO NOT overwrite existing category
+
+        // Update tags only if provided in Excel (non-empty)
+        if (newData.getTags() != null && !newData.getTags().isEmpty()) {
+            existing.setTags(newData.getTags());
+        }
+        // If tags are empty in Excel, DO NOT overwrite existing tags
     }
 }
