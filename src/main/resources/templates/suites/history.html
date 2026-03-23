@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>Suite Execution History - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: #4e73df;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suite-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stats-badge {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4e73df;
+        }
+
+        .execution-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4e73df;
+            transition: all 0.2s;
+        }
+
+        .execution-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            padding: 8px 12px;
+            font-weight: 500;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-number {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <div class="page-title">
+                <i class="bi bi-clock-history"></i>
+                <h2 class="mb-0">Suite Execution History</h2>
+                <a href="/suites" class="btn btn-outline-primary ms-auto">
+                    <i class="bi bi-arrow-left"></i> Back to Suites
+                </a>
+            </div>
+
+            <!-- Suite Information -->
+            <div class="suite-info" th:if="${testSuite != null}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4 th:text="${testSuite.name}">Suite Name</h4>
+                        <p class="mb-1" th:text="${testSuite.description} ?: 'No description'">Description</p>
+                        <p class="mb-0 text-muted small">
+                            <i class="bi bi-files"></i> <span th:text="${testSuite.testCases.size()}">0</span> test
+                            cases
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-badge">
+                            <div class="stats-number" th:text="${#lists.size(executions)}">0</div>
+                            <div class="text-muted">Total Executions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution History -->
+            <h5 class="mb-3">Execution History</h5>
+
+            <div th:if="${#lists.isEmpty(executions)}" class="text-center text-muted py-5">
+                <i class="bi bi-clock-history fs-1"></i>
+                <p class="mt-3">No executions recorded for this suite yet.</p>
+            </div>
+
+            <div th:if="${not #lists.isEmpty(executions)}">
+                <div th:each="exec : ${executions}" class="execution-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="small text-muted">
+                                <i class="bi bi-calendar"></i>
+                                <span th:text="${#temporals.format(exec.executedOn, 'yyyy-MM-dd HH:mm')}">Date</span>
+                            </div>
+                            <div class="fw-bold mt-1">
+                                <i class="bi bi-person"></i>
+                                <span th:text="${exec.executedBy}">User</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Passed: <span
+                                        th:text="${exec.passedTests}">0</span>
+                                </span>
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Failed: <span th:text="${exec.failedTests}">0</span>
+                                </span>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle"></i> Blocked: <span
+                                        th:text="${exec.blockedTests}">0</span>
+                                </span>
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-hourglass"></i> Pending: <span
+                                        th:text="${exec.pendingTests}">0</span>
+                                </span>
+                            </div>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.passedTests * 100 / exec.totalTests) : 0) + '%'">
+                                </div>
+                                <div class="progress-bar bg-danger" role="progressbar"
+                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.failedTests * 100 / exec.totalTests) : 0) + '%'">
+                                </div>
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.blockedTests * 100 / exec.totalTests) : 0) + '%'">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-md-end mt-2 mt-md-0">
+                            <div class="small text-muted">
+                                <i class="bi bi-speedometer2"></i>
+                                <span
+                                    th:text="${#numbers.formatDecimal(exec.executionTimeMs / 1000.0, 1, 2)}">0.00</span>
+                                seconds
+                            </div>
+                            <div class="mt-1">
+                                <span class="badge"
+                                    th:classappend="|bg-${exec.totalTests == exec.passedTests ? 'success' : 'warning'}|">
+                                    <span
+                                        th:text="${exec.totalTests > 0 ? (exec.passedTests * 100 / exec.totalTests) : 0}">0</span>%
+                                    Pass Rate
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <nav th:if="${totalPages > 1}" aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/suites/history/{id}(id=${testSuite.id}, page=${currentPage - 1})}">Previous</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/suites/history/{id}(id=${testSuite.id}, page=${i})}"
+                                th:text="${i + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/suites/history/{id}(id=${testSuite.id}, page=${currentPage + 1})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

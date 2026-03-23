@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title th:text="${testSuite.id == null ? 'Create Test Suite' : 'Edit Test Suite'}">Create Test Suite - QA Test
+        Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            max-width: 800px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h3 {
+            font-weight: 700;
+            color: #4e73df;
+            font-size: 1.8rem;
+        }
+
+        .page-title i {
+            font-size: 2.5rem;
+            color: #4e73df;
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #e74a3b;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .test-case-checkbox {
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .test-case-checkbox:hover {
+            background: #f8f9fa;
+        }
+
+        .test-case-checkbox input {
+            margin-right: 10px;
+        }
+
+        .test-case-info {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 35px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #6c757d;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 10px 25px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: #f8f9fa;
+            color: #495057;
+            border-color: #4e73df;
+        }
+
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card-footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .select-all-btn {
+            cursor: pointer;
+            color: #4e73df;
+            font-size: 0.9rem;
+        }
+
+        .select-all-btn:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 576px) {
+            .main-card {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+
+            .card-footer-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <div class="page-title">
+                <i class="bi bi-folder2"></i>
+                <h3 th:text="${testSuite.id == null ? 'Create Test Suite' : 'Edit Test Suite'}">
+                    Create Test Suite
+                </h3>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <form th:action="@{/suites/save}" method="post" th:object="${testSuite}">
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="mb-3">
+                    <label class="form-label required-field">Suite Name</label>
+                    <input type="text" th:field="*{name}" class="form-control"
+                        placeholder="e.g., Regression Suite, Login Tests" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea th:field="*{description}" class="form-control" rows="3"
+                        placeholder="Describe the purpose of this test suite"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Test Cases</label>
+                    <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Select test cases to include in this suite</small>
+                            <span class="select-all-btn" onclick="toggleAll()">
+                                <i class="bi bi-check2-square"></i> Select All
+                            </span>
+                        </div>
+                        <div th:if="${#lists.isEmpty(allTestCases)}" class="text-center text-muted py-3">
+                            <i class="bi bi-info-circle"></i> No test cases available. Create test cases first.
+                        </div>
+                        <div th:if="${not #lists.isEmpty(allTestCases)}">
+                            <div th:each="tc : ${allTestCases}" class="test-case-checkbox">
+                                <input type="checkbox" name="testCaseIds" th:value="${tc.id}"
+                                    th:checked="${testSuite.testCases != null && testSuite.testCases.contains(tc)}"
+                                    id="tc_${tc.id}">
+                                <label th:for="tc_${tc.id}">
+                                    <strong th:text="${tc.testCaseId}">TC-001</strong> -
+                                    <span th:text="${tc.testCaseName}">Test Name</span>
+                                    <span class="test-case-info">
+                                        [<span th:text="${tc.priority}">High</span>]
+                                        [<span th:text="${tc.testType}">Functional</span>]
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="bi bi-info-circle"></i> Selected test cases will be executed when you run this suite.
+                    </small>
+                </div>
+
+                <div class="card-footer-actions">
+                    <a href="/suites" class="btn-cancel">
+                        <i class="bi bi-x-lg"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-lg"></i>
+                        <span th:text="${testSuite.id == null ? 'Create Suite' : 'Update Suite'}">
+                            Create Suite
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleAll() {
+            const checkboxes = document.querySelectorAll('input[name="testCaseIds"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+    </script>
+</body>
+
+</html>

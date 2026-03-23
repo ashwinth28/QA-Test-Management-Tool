@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+
+<head>
+    <title>Test Suites - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--primary-gradient);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            color: #4e73df;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suite-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+
+        .suite-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .suite-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 10px;
+        }
+
+        .suite-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .suite-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .suite-stat {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .suite-stat strong {
+            font-size: 1rem;
+            color: #4e73df;
+        }
+
+        .badge-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .btn-action {
+            margin: 2px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #4e73df;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .suite-stats {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/testcases/list">
+                            <i class="bi bi-list-task"></i> Test Cases
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">
+                            <i class="bi bi-file-earmark-text"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/suites">
+                            <i class="bi bi-folder2"></i> Test Suites
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span th:text="${#authentication.name}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <div class="page-title">
+                <i class="bi bi-folder2"></i>
+                <h2 class="mb-0">Test Suites</h2>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Create Suite Button -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="text-muted mb-0">Organize test cases into suites for batch execution.</p>
+                <a href="/suites/new" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> New Test Suite
+                </a>
+            </div>
+
+            <!-- Suites List -->
+            <div th:if="${#lists.isEmpty(suites)}" class="empty-state">
+                <i class="bi bi-folder2-open"></i>
+                <h4>No Test Suites Yet</h4>
+                <p>Create your first test suite to group related test cases.</p>
+                <a href="/suites/new" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-lg"></i> Create Test Suite
+                </a>
+            </div>
+
+            <div th:if="${not #lists.isEmpty(suites)}">
+                <div th:each="suite : ${suites}" class="suite-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="suite-title">
+                                <i class="bi bi-folder-fill me-2" style="color: #4e73df;"></i>
+                                <span th:text="${suite.name}">Suite Name</span>
+                            </div>
+                            <div class="suite-description" th:text="${suite.description} ?: 'No description'">
+                                Suite description
+                            </div>
+                            <div class="suite-stats">
+                                <div class="suite-stat">
+                                    <i class="bi bi-files"></i>
+                                    <strong th:text="${suite.testCases.size()}">0</strong> Test Cases
+                                </div>
+                                <div class="suite-stat">
+                                    <i class="bi bi-calendar"></i>
+                                    Created: <span
+                                        th:text="${#temporals.format(suite.createdOn, 'yyyy-MM-dd')}">Date</span>
+                                </div>
+                                <div th:if="${suite.executedOn != null}" class="suite-stat">
+                                    <i class="bi bi-clock-history"></i>
+                                    Last executed: <span
+                                        th:text="${#temporals.format(suite.executedOn, 'yyyy-MM-dd HH:mm')}">Date</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge-status" th:classappend="|bg-${suite.status.bootstrapClass}|"
+                                th:text="${suite.status.displayName}">Pending</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <a th:href="@{/suites/execute/{id}(id=${suite.id})}" class="btn btn-success btn-sm btn-action"
+                            th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}"
+                            onclick="return confirm('Are you sure you want to execute this suite? All test cases will be executed.');">
+                            <i class="bi bi-play-fill"></i> Execute
+                        </a>
+                        <a th:href="@{/suites/history/{id}(id=${suite.id})}" class="btn btn-info btn-sm btn-action">
+                            <i class="bi bi-clock-history"></i> History
+                        </a>
+                        <a th:href="@{/suites/edit/{id}(id=${suite.id})}" class="btn btn-warning btn-sm btn-action"
+                            th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''TESTER'')')}">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form th:action="@{/suites/delete/{id}(id=${suite.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm btn-action"
+                                th:if="${#authorization.expression('hasRole(''ADMIN'')')}"
+                                onclick="return confirm('Delete this test suite? This action cannot be undone.');">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <nav th:if="${totalPages > 1}" aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/suites(page=${currentPage - 1})}">Previous</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/suites(page=${i})}" th:text="${i + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/suites(page=${currentPage + 1})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
