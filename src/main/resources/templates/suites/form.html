@@ -232,8 +232,8 @@
                             <div th:each="tc : ${allTestCases}" class="test-case-checkbox">
                                 <input type="checkbox" name="testCaseIds" th:value="${tc.id}"
                                     th:checked="${testSuite.testCases != null && testSuite.testCases.contains(tc)}"
-                                    id="tc_${tc.id}">
-                                <label th:for="tc_${tc.id}">
+                                    th:id="'tc_' + ${tc.id}">
+                                <label th:for="'tc_' + ${tc.id}">
                                     <strong th:text="${tc.testCaseId}">TC-001</strong> -
                                     <span th:text="${tc.testCaseName}">Test Name</span>
                                     <span class="test-case-info">

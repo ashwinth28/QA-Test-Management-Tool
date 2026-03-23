@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/suites")
@@ -90,76 +92,108 @@ public class TestSuiteController {
     }
 
     @GetMapping("/execute/{id}")
-    public String executeSuite(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            TestSuite testSuite = testSuiteRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid suite Id:" + id));
+    public String executeSuitePage(@PathVariable Long id, Model model) {
+        TestSuite testSuite = testSuiteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid suite Id:" + id));
 
-            List<TestCase> testCases = testSuite.getTestCases();
-            if (testCases.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "This suite has no test cases to execute!");
-                return "redirect:/suites";
-            }
+        List<TestCase> testCases = testSuite.getTestCases();
+        if (testCases.isEmpty()) {
+            model.addAttribute("errorMessage", "This suite has no test cases to execute!");
+            return "redirect:/suites";
+        }
+
+        model.addAttribute("testSuite", testSuite);
+        model.addAttribute("testCases", testCases);
+        model.addAttribute("statuses", TestStatus.values());
+
+        return "suites/execute";
+    }
+
+    @PostMapping("/execute-all")
+    public String executeAllTestCases(@RequestParam Long suiteId,
+            @RequestParam Map<String, String> allParams,
+            RedirectAttributes redirectAttributes) {
+        try {
+            TestSuite testSuite = testSuiteRepository.findById(suiteId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid suite Id:" + suiteId)); // FIXED
 
             String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
 
-            // Update suite status to RUNNING
-            testSuite.setStatus(TestSuiteStatus.RUNNING);
-            testSuite.setExecutedBy(currentUser);
-            testSuite.setExecutedOn(LocalDateTime.now());
-            testSuiteRepository.save(testSuite);
+            int passed = 0, failed = 0, blocked = 0, pending = 0;
+            List<Execution> executions = new ArrayList<>();
+
+            // Process each test case
+            for (TestCase testCase : testSuite.getTestCases()) {
+                Long testCaseId = testCase.getId();
+                String statusKey = "status_" + testCaseId;
+                String actualResultKey = "actualResult_" + testCaseId;
+                String remarksKey = "remarks_" + testCaseId;
+                String expectedResultKey = "expectedResultVerified_" + testCaseId;
+
+                String statusStr = allParams.get(statusKey);
+                String actualResult = allParams.get(actualResultKey);
+                String remarks = allParams.get(remarksKey);
+                String expectedResultVerified = allParams.get(expectedResultKey);
+
+                if (statusStr != null && !statusStr.isEmpty()) {
+                    TestStatus status = TestStatus.valueOf(statusStr);
+
+                    // Create execution record
+                    Execution execution = new Execution();
+                    execution.setTestCase(testCase);
+                    execution.setExecutedBy(currentUser);
+                    execution.setExecutedOn(LocalDateTime.now());
+                    execution.setStatus(status);
+                    execution.setActualResult(actualResult != null ? actualResult : "");
+                    execution.setRemarks(remarks != null ? remarks : "");
+                    execution.setExpectedResultVerified(
+                            expectedResultVerified != null ? expectedResultVerified : "Executed via suite");
+
+                    executions.add(execution);
+
+                    // Update test case status
+                    testCase.setStatus(status);
+                    testCase.setExecutedOn(LocalDateTime.now());
+                    testCase.setActualResult(actualResult);
+                    testCaseRepository.save(testCase);
+
+                    // Count for suite stats
+                    switch (status) {
+                        case PASS:
+                            passed++;
+                            break;
+                        case FAIL:
+                            failed++;
+                            break;
+                        case BLOCKED:
+                            blocked++;
+                            break;
+                        default:
+                            pending++;
+                    }
+
+                    // Send real-time update
+                    updateService.sendTestCaseUpdate(testCase);
+                }
+            }
+
+            // Save all executions
+            executionRepository.saveAll(executions);
 
             // Create suite execution record
             SuiteExecution suiteExecution = new SuiteExecution();
             suiteExecution.setTestSuite(testSuite);
             suiteExecution.setExecutedBy(currentUser);
-            suiteExecution.setTotalTests(testCases.size());
-
-            long startTime = System.currentTimeMillis();
-
-            int passed = 0, failed = 0, blocked = 0, pending = 0;
-            // Execute each test case in the suite
-            for (TestCase testCase : testCases) {
-                // Create an execution record for the test case
-                Execution execution = new Execution();
-                execution.setTestCase(testCase);
-                execution.setExecutedBy(currentUser);
-                execution.setExecutedOn(LocalDateTime.now());
-                execution.setStatus(testCase.getStatus()); // Keep existing status
-                execution.setActualResult(testCase.getActualResult());
-
-                executionRepository.save(execution);
-                suiteExecution.getTestCaseResults().put(testCase.getId(),
-                        testCase.getStatus().getDisplayName());
-
-                switch (testCase.getStatus()) {
-                    case PASS:
-                        passed++;
-                        break;
-                    case FAIL:
-                        failed++;
-                        break;
-                    case BLOCKED:
-                        blocked++;
-                        break;
-                    default:
-                        pending++;
-                }
-            }
-
-            long executionTime = System.currentTimeMillis() - startTime;
-
-            // Update suite execution record
+            suiteExecution.setExecutedOn(LocalDateTime.now());
+            suiteExecution.setTotalTests(testSuite.getTestCases().size());
             suiteExecution.setPassedTests(passed);
             suiteExecution.setFailedTests(failed);
             suiteExecution.setBlockedTests(blocked);
             suiteExecution.setPendingTests(pending);
-            suiteExecution.setExecutionTimeMs(executionTime);
             suiteExecutionRepository.save(suiteExecution);
 
             // Update suite status
-            if (passed == testCases.size()) {
+            if (passed == testSuite.getTestCases().size()) {
                 testSuite.setStatus(TestSuiteStatus.PASSED);
             } else if (failed > 0 && passed == 0 && blocked == 0) {
                 testSuite.setStatus(TestSuiteStatus.FAILED);
@@ -168,17 +202,19 @@ public class TestSuiteController {
             }
             testSuiteRepository.save(testSuite);
 
-            // Send real-time updates
+            // Update dashboard
             updateService.sendDashboardUpdate();
 
             redirectAttributes.addFlashAttribute("successMessage",
-                    String.format("Suite executed: %d passed, %d failed, %d blocked in %.2f seconds",
-                            passed, failed, blocked, executionTime / 1000.0));
+                    String.format("Suite executed: %d passed, %d failed, %d blocked, %d pending",
+                            passed, failed, blocked, pending));
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Error executing suite: " + e.getMessage());
+            e.printStackTrace();
         }
+
         return "redirect:/suites";
     }
 

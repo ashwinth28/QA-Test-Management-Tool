@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Execute Test Suite - QA Test Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            padding-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .suite-header {
+            background: linear-gradient(135deg, #4e73df, #1cc88a);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .test-case-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+
+        .test-case-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #e74a3b;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-wrapper {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .badge-current-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .badge-current-status.bg-success {
+            background: #1cc88a;
+            color: white;
+        }
+
+        .badge-current-status.bg-danger {
+            background: #e74a3b;
+            color: white;
+        }
+
+        .badge-current-status.bg-warning {
+            background: #f6c23e;
+            color: #333;
+        }
+
+        .badge-current-status.bg-secondary {
+            background: #858796;
+            color: white;
+        }
+
+        .badge-current-status.bg-info {
+            background: #36b9cc;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-check2-circle text-primary"></i>
+                <span class="fw-bold">QA Test Management</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-card">
+            <div class="suite-header">
+                <h2><i class="bi bi-play-circle"></i> Execute Test Suite</h2>
+                <h4 th:text="${testSuite.name}">Suite Name</h4>
+                <p th:text="${testSuite.description} ?: 'No description'">Description</p>
+                <div class="mt-2">
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-files"></i> <span th:text="${testCases.size()}">0</span> test cases
+                    </span>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill"></i>
+                Fill in the execution details for each test case below. All fields marked with * are required.
+            </div>
+
+            <form th:action="@{/suites/execute-all}" method="post">
+                <input type="hidden" name="suiteId" th:value="${testSuite.id}">
+
+                <div th:each="tc : ${testCases}" class="test-case-card">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5>
+                                <span th:text="${tc.testCaseId}">TC-001</span> -
+                                <span th:text="${tc.testCaseName}">Test Case Name</span>
+                                <!-- FIXED: Use conditional classes instead of expression -->
+                                <span class="badge-current-status ms-2" th:class="${tc.status.name() == 'PASS' ? 'bg-success' : 
+                                                (tc.status.name() == 'FAIL' ? 'bg-danger' : 
+                                                 (tc.status.name() == 'BLOCKED' ? 'bg-warning' : 'bg-secondary'))}"
+                                    th:text="${tc.status.displayName}">Current Status</span>
+                            </h5>
+                            <p class="text-muted small mt-2">
+                                <strong>Expected Result:</strong> <span
+                                    th:text="${tc.expectedResult} ?: 'No expected result'"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Status</label>
+                            <select th:name="'status_' + ${tc.id}" class="form-select" required>
+                                <option value="">Select Status</option>
+                                <option th:each="status : ${statuses}" th:value="${status.name()}"
+                                    th:text="${status.displayName}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Actual Result</label>
+                            <textarea th:name="'actualResult_' + ${tc.id}" class="form-control" rows="2"
+                                placeholder="What actually happened?" required></textarea>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label required-field">Expected Result Verification</label>
+                            <textarea th:name="'expectedResultVerified_' + ${tc.id}" class="form-control" rows="2"
+                                placeholder="Was the expected result met? Explain any differences." required></textarea>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Remarks / Notes</label>
+                            <textarea th:name="'remarks_' + ${tc.id}" class="form-control" rows="2"
+                                placeholder="Additional observations, screenshots, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-wrapper">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Execution Progress</span>
+                        <span id="progressText">0/<span th:text="${testCases.size()}"></span> completed</span>
+                    </div>
+                    <div class="progress">
+                        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn-submit" onclick="return confirm('Submit all executions?')">
+                        <i class="bi bi-check-lg"></i> Submit All Executions
+                    </button>
+                    <a href="/suites" class="btn btn-secondary ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Track progress as user fills out forms
+        const totalTestCases = parseInt(document.querySelectorAll('.test-case-card').length);
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        function updateProgress() {
+            let completed = 0;
+            document.querySelectorAll('.test-case-card').forEach(card => {
+                const status = card.querySelector('select[name^="status_"]').value;
+                const actualResult = card.querySelector('textarea[name^="actualResult_"]').value;
+                const expectedResult = card.querySelector('textarea[name^="expectedResultVerified_"]').value;
+
+                if (status && actualResult && expectedResult) {
+                    completed++;
+                }
+            });
+
+            const percentage = (completed / totalTestCases) * 100;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = completed + '/' + totalTestCases + ' completed';
+
+            if (completed === totalTestCases) {
+                progressBar.classList.add('bg-success');
+            } else {
+                progressBar.classList.remove('bg-success');
+                progressBar.classList.add('bg-info');
+            }
+        }
+
+        // Add event listeners to all form fields
+        document.querySelectorAll('.test-case-card select, .test-case-card textarea').forEach(field => {
+            field.addEventListener('change', updateProgress);
+            field.addEventListener('keyup', updateProgress);
+        });
+
+        updateProgress();
+    </script>
+</body>
+
+</html>

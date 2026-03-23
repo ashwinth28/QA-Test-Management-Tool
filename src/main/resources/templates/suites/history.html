@@ -173,15 +173,19 @@
                                         th:text="${exec.pendingTests}">0</span>
                                 </span>
                             </div>
+                            <!-- FIXED: Use th:with to calculate percentages -->
                             <div class="progress mt-2">
                                 <div class="progress-bar bg-success" role="progressbar"
-                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.passedTests * 100 / exec.totalTests) : 0) + '%'">
+                                    th:with="passPercent=${exec.totalTests > 0 ? (exec.passedTests * 100 / exec.totalTests) : 0}"
+                                    th:style="'width: ' + ${passPercent} + '%'">
                                 </div>
                                 <div class="progress-bar bg-danger" role="progressbar"
-                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.failedTests * 100 / exec.totalTests) : 0) + '%'">
+                                    th:with="failPercent=${exec.totalTests > 0 ? (exec.failedTests * 100 / exec.totalTests) : 0}"
+                                    th:style="'width: ' + ${failPercent} + '%'">
                                 </div>
                                 <div class="progress-bar bg-warning" role="progressbar"
-                                    th:style="'width: ' + (exec.totalTests > 0 ? (exec.blockedTests * 100 / exec.totalTests) : 0) + '%'">
+                                    th:with="blockedPercent=${exec.totalTests > 0 ? (exec.blockedTests * 100 / exec.totalTests) : 0}"
+                                    th:style="'width: ' + ${blockedPercent} + '%'">
                                 </div>
                             </div>
                         </div>
