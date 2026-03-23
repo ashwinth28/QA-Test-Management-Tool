@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Case Assignment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .content {
+            background: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>QA Test Management</h2>
+            <p>Test Case Assigned to You</p>
+        </div>
+        <div class="content">
+            <p>Hello <span th:text="${user.fullName}">User</span>,</p>
+            <p>A test case has been assigned to you:</p>
+            <ul>
+                <li><strong>ID:</strong> <span th:text="${testCase.testCaseId}">TC-001</span></li>
+                <li><strong>Name:</strong> <span th:text="${testCase.testCaseName}">Login Test</span></li>
+                <li><strong>Priority:</strong> <span th:text="${testCase.priority}">High</span></li>
+                <li><strong>Type:</strong> <span th:text="${testCase.testType}">Functional</span></li>
+            </ul>
+            <p>Please execute this test case at your earliest convenience.</p>
+            <div style="text-align: center;">
+                <a href="https://yourdomain.com/testcases/execute" class="button">Execute Test Case</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>This is an automated notification from QA Test Management System.</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -5,6 +5,7 @@ import com.qa.testmanagement.model.TestStatus;
 import com.qa.testmanagement.model.Execution;
 import com.qa.testmanagement.repository.TestCaseRepository;
 import com.qa.testmanagement.repository.ExecutionRepository;
+import com.qa.testmanagement.service.EmailService;
 import com.qa.testmanagement.service.TestCaseUpdateService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,6 +45,9 @@ public class TestCaseController {
 
     @Autowired
     private TestCaseUpdateService updateService;
+
+    @Autowired
+    private EmailService emailService;
 
     @ModelAttribute("allStatuses")
     public List<TestStatus> populateStatuses() {
@@ -174,7 +178,7 @@ public class TestCaseController {
         return "execute-testcase";
     }
 
-    // FIXED VERSION - With debug logging
+    // FIXED VERSION - With correct email placement
     @PostMapping("/execute/save")
     public String saveExecution(
             @RequestParam(value = "testCaseId", required = false) Long testCaseId,
@@ -247,6 +251,10 @@ public class TestCaseController {
 
             executionRepository.save(execution);
             logger.info("Execution saved successfully with ID: {}", execution.getId());
+
+            // FIXED: Email notification AFTER execution is saved (not before)
+            // This line should only be here, not duplicated
+            emailService.sendExecutionNotification(testCase, execution);
 
             // Update test case
             testCase.setStatus(status);

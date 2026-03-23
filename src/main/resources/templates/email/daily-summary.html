@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Test Execution Summary</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .content {
+            background: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>QA Test Management</h2>
+            <p>Daily Execution Summary</p>
+        </div>
+        <div class="content">
+            <p>Hello Admin,</p>
+            <p>Here's your daily test execution summary:</p>
+
+            <div class="stats">
+                <p><strong>Date:</strong> <span th:text="${currentDate}">2024-01-01</span></p>
+                <!-- Add your daily stats here -->
+            </div>
+
+            <div style="text-align: center;">
+                <a href="https://yourdomain.com/dashboard" class="button">View Full Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>This is an automated daily summary from QA Test Management System.</p>
+        </div>
+    </div>
+</body>
+
+</html>

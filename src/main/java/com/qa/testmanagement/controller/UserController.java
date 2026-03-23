@@ -3,6 +3,7 @@ package com.qa.testmanagement.controller;
 import com.qa.testmanagement.model.User;
 import com.qa.testmanagement.model.UserRole;
 import com.qa.testmanagement.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
-
 
 @Controller
 @RequestMapping("/admin")
