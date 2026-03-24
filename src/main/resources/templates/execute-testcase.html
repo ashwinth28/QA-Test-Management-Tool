@@ -119,17 +119,6 @@
             box-shadow: 0 0 0 0.2rem rgba(231, 74, 59, 0.25);
         }
 
-        .readonly-field {
-            background-color: #f8f9fa;
-            border: 2px dashed #4e73df;
-            cursor: default;
-        }
-
-        .readonly-field:focus {
-            border-color: #4e73df;
-            box-shadow: none;
-        }
-
         .badge-status {
             font-size: 0.9rem;
             padding: 0.5rem 0.8rem;
@@ -437,7 +426,11 @@
 
 <body>
     <!-- Loading Overlay -->
-    <!-- Navigation Bar with Users link for ADMIN -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <a class="navbar-brand" href="/dashboard">
@@ -469,13 +462,11 @@
                             <i class="bi bi-folder2"></i> Test Suites
                         </a>
                     </li>
-                    <!-- USERS LINK - Only visible to ADMIN -->
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                         <a class="nav-link" href="/admin/users">
                             <i class="bi bi-people"></i> Users
                         </a>
                     </li>
-                    <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                             data-bs-toggle="dropdown">
@@ -559,7 +550,7 @@
                     </div>
                 </div>
 
-                <!-- Expected Result Box -->
+                <!-- Expected Result Box - READ ONLY -->
                 <div class="expected-result-box">
                     <div class="label">
                         <i class="bi bi-eye"></i> Expected Result
@@ -587,9 +578,7 @@
                     <i class="bi bi-pencil-square"></i> Execution Details
                 </div>
 
-                <!-- SIMPLIFIED FORM - Direct POST without binding -->
                 <form action="/testcases/execute/save" method="post" id="executionForm">
-                    <!-- Pass the test case ID directly -->
                     <input type="hidden" name="testCaseId" th:value="${testcase.id}" />
 
                     <!-- Executed By (Mandatory) -->
@@ -606,38 +595,18 @@
                         <div class="error-message" id="executedByError"></div>
                     </div>
 
-                    <!-- Actual Result (Auto-filled from Test Case, Read-only) -->
-                    <div class="mb-4">
-                        <label class="form-label">
-                            <i class="bi bi-check-circle"></i> Actual Result
-                            <span class="info-tooltip" data-bs-toggle="tooltip"
-                                title="This value is auto-filled from the test case">
-                                <i class="bi bi-question-circle"></i>
-                            </span>
-                        </label>
-                        <textarea name="actualResult" class="form-control readonly-field" rows="3" readonly
-                            th:text="${testcase.actualResult}"></textarea>
-                        <div class="info-text">
-                            <i class="bi bi-info-circle"></i> This value is auto-filled from the test case and cannot be
-                            edited
-                        </div>
-                    </div>
-
-                    <!-- Expected Results (Mandatory) -->
+                    <!-- Actual Result (Editable, Mandatory) -->
                     <div class="mb-4">
                         <label class="form-label required-field">
-                            <i class="bi bi-clipboard-check"></i> Expected Results
+                            <i class="bi bi-check-circle"></i> Actual Result
                             <span class="info-tooltip" data-bs-toggle="tooltip"
-                                title="Enter what you observed during execution">
+                                title="Describe what actually happened during execution">
                                 <i class="bi bi-question-circle"></i>
                             </span>
                         </label>
-                        <textarea name="expectedResultVerified" class="form-control" rows="3" id="expectedResults"
-                            placeholder="Enter the expected results for this execution" required></textarea>
-                        <div class="character-count">
-                            <i class="bi bi-text-paragraph"></i> <span id="expectedResultsCount">0</span>/2000
-                        </div>
-                        <div class="error-message" id="expectedResultsError"></div>
+                        <textarea name="actualResult" class="form-control" rows="3"
+                            placeholder="Describe what actually happened during execution" required></textarea>
+                        <div class="error-message" id="actualResultError"></div>
                     </div>
 
                     <!-- Status (Mandatory) -->
@@ -685,6 +654,10 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script th:inline="javascript">
         /*<![CDATA[*/
         const testcaseId = /*[[${testcase.id}]]*/ 0;
@@ -718,15 +691,7 @@
 
         // Initialize character counters
         function initializeCharacterCounters() {
-            const expectedResults = document.getElementById('expectedResults');
             const remarks = document.getElementById('remarks');
-
-            if (expectedResults) {
-                expectedResults.addEventListener('input', function () {
-                    document.getElementById('expectedResultsCount').textContent = this.value.length;
-                });
-            }
-
             if (remarks) {
                 remarks.addEventListener('input', function () {
                     document.getElementById('remarksCount').textContent = this.value.length;
@@ -738,73 +703,105 @@
         function initializeFormValidation() {
             const form = document.getElementById('executionForm');
 
+            if (!form) {
+                console.error('Form not found!');
+                return;
+            }
+
             form.addEventListener('submit', function (e) {
                 let isValid = true;
+                let errorMessage = '';
 
                 // Clear previous errors
-                document.querySelectorAll('.error-message').forEach(el => el.innerHTML = '');
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.innerHTML = '';
+                    el.style.display = 'none';
+                });
                 document.querySelectorAll('.form-control, .form-select').forEach(el => {
                     el.classList.remove('is-invalid');
                 });
 
                 // Validate Executed By
                 const executedBy = document.querySelector('[name="executedBy"]');
-                if (!executedBy.value.trim()) {
+                if (!executedBy || !executedBy.value.trim()) {
                     showFieldError(executedBy, 'executedByError', 'Executed By is required');
                     isValid = false;
+                    errorMessage += 'Executed By, ';
                 }
 
-                // Validate Expected Results
-                const expectedResults = document.getElementById('expectedResults');
-                if (!expectedResults.value.trim()) {
-                    showFieldError(expectedResults, 'expectedResultsError', 'Expected Results is required');
+                // Validate Actual Result
+                const actualResult = document.querySelector('[name="actualResult"]');
+                if (!actualResult || !actualResult.value.trim()) {
+                    showFieldError(actualResult, 'actualResultError', 'Actual Result is required');
                     isValid = false;
+                    errorMessage += 'Actual Result, ';
                 }
 
                 // Validate Status
                 const status = document.getElementById('statusSelect');
-                if (!status.value) {
+                if (!status || !status.value) {
                     showFieldError(status, 'statusError', 'Status is required');
                     isValid = false;
+                    errorMessage += 'Status, ';
                 }
 
                 if (!isValid) {
                     e.preventDefault();
+                    e.stopPropagation();
+
+                    // Remove trailing comma and show alert
+                    errorMessage = errorMessage.slice(0, -2);
+                    showNotification('Please fill all required fields: ' + errorMessage, 'danger');
+                    hideLoading();
                     return false;
                 }
 
+                // If valid, show loading overlay and allow form submission
                 showLoading();
+                return true;
             });
 
             // Remove error on input
             document.querySelectorAll('.form-control, .form-select').forEach(element => {
                 element.addEventListener('input', function () {
                     this.classList.remove('is-invalid');
-                    const errorId = this.id + 'Error';
-                    const errorEl = document.getElementById(errorId);
-                    if (errorEl) errorEl.innerHTML = '';
+                    // Clear the error message for this field
+                    if (this.id) {
+                        const errorEl = document.getElementById(this.id + 'Error');
+                        if (errorEl) {
+                            errorEl.innerHTML = '';
+                            errorEl.style.display = 'none';
+                        }
+                    }
                 });
             });
         }
 
         // Show field error
         function showFieldError(field, errorId, message) {
-            field.classList.add('is-invalid');
+            if (field) {
+                field.classList.add('is-invalid');
+            }
             const errorEl = document.getElementById(errorId);
             if (errorEl) {
                 errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + message;
+                errorEl.style.display = 'block';
             }
         }
 
-        // Show loading overlay
+        // Show loading overlay - Simplified without timeout
         function showLoading() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            return true;
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
         }
 
-        // Hide loading overlay
         function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
         }
 
         // WebSocket Connection
@@ -862,19 +859,20 @@
             }[type] || 'bi-info-circle-fill';
 
             const toastHtml = `
-                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <i class="bi ${icon} me-2"></i>
-                            ${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${icon} me-2"></i>
+                        ${message}
                     </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
-            `;
+            </div>
+        `;
 
             document.body.insertAdjacentHTML('beforeend', toastHtml);
 
+            // Auto remove after 5 seconds
             setTimeout(() => {
                 const toast = document.getElementById(toastId);
                 if (toast) toast.remove();
@@ -891,7 +889,6 @@
 
         /*]]>*/
     </script>
-
 </body>
 
 </html>

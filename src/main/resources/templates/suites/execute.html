@@ -102,9 +102,42 @@
             color: white;
         }
 
-        .badge-current-status.bg-info {
-            background: #36b9cc;
-            color: white;
+        .expected-result-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4e73df;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .card-footer-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 576px) {
+            .card-footer-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -147,20 +180,38 @@
                             <h5>
                                 <span th:text="${tc.testCaseId}">TC-001</span> -
                                 <span th:text="${tc.testCaseName}">Test Case Name</span>
-                                <!-- FIXED: Use conditional classes instead of expression -->
                                 <span class="badge-current-status ms-2" th:class="${tc.status.name() == 'PASS' ? 'bg-success' : 
-                                                (tc.status.name() == 'FAIL' ? 'bg-danger' : 
-                                                 (tc.status.name() == 'BLOCKED' ? 'bg-warning' : 'bg-secondary'))}"
+                                              (tc.status.name() == 'FAIL' ? 'bg-danger' : 
+                                               (tc.status.name() == 'BLOCKED' ? 'bg-warning' : 'bg-secondary'))}"
                                     th:text="${tc.status.displayName}">Current Status</span>
                             </h5>
-                            <p class="text-muted small mt-2">
-                                <strong>Expected Result:</strong> <span
-                                    th:text="${tc.expectedResult} ?: 'No expected result'"></span>
-                            </p>
                         </div>
                     </div>
 
+                    <!-- Test Case Details -->
                     <div class="row mt-3">
+                        <div class="col-md-12">
+                            <p><strong>Precondition:</strong> <span th:text="${tc.precondition} ?: 'None'"></span></p>
+                            <p><strong>Steps:</strong> <span th:text="${tc.testSteps} ?: 'None'"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- Expected Result Box - READ ONLY -->
+                    <div class="expected-result-box">
+                        <p class="mb-1"><strong>Expected Result:</strong></p>
+                        <p class="mb-0" th:text="${tc.expectedResult} ?: 'No expected result specified'">Expected result
+                            here</p>
+                    </div>
+
+                    <div class="row mt-3">
+                        <!-- Executed By (Mandatory) -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Executed By</label>
+                            <input type="text" th:name="'executedBy_' + ${tc.id}" class="form-control"
+                                placeholder="Enter your name" required>
+                        </div>
+
+                        <!-- Status (Mandatory) -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label required-field">Status</label>
                             <select th:name="'status_' + ${tc.id}" class="form-select" required>
@@ -169,19 +220,17 @@
                                     th:text="${status.displayName}"></option>
                             </select>
                         </div>
+                    </div>
 
-                        <div class="col-md-6 mb-3">
+                    <div class="row">
+                        <!-- Actual Result (Editable, Mandatory) -->
+                        <div class="col-md-12 mb-3">
                             <label class="form-label required-field">Actual Result</label>
                             <textarea th:name="'actualResult_' + ${tc.id}" class="form-control" rows="2"
-                                placeholder="What actually happened?" required></textarea>
+                                placeholder="Describe what actually happened during execution" required></textarea>
                         </div>
 
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label required-field">Expected Result Verification</label>
-                            <textarea th:name="'expectedResultVerified_' + ${tc.id}" class="form-control" rows="2"
-                                placeholder="Was the expected result met? Explain any differences." required></textarea>
-                        </div>
-
+                        <!-- Remarks (Optional) -->
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Remarks / Notes</label>
                             <textarea th:name="'remarks_' + ${tc.id}" class="form-control" rows="2"
@@ -201,11 +250,11 @@
                     </div>
                 </div>
 
-                <div class="text-center mt-4">
+                <div class="card-footer-actions">
+                    <a href="/suites" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn-submit" onclick="return confirm('Submit all executions?')">
                         <i class="bi bi-check-lg"></i> Submit All Executions
                     </button>
-                    <a href="/suites" class="btn btn-secondary ms-2">Cancel</a>
                 </div>
             </form>
         </div>
@@ -221,11 +270,11 @@
         function updateProgress() {
             let completed = 0;
             document.querySelectorAll('.test-case-card').forEach(card => {
+                const executedBy = card.querySelector('input[name^="executedBy_"]').value;
                 const status = card.querySelector('select[name^="status_"]').value;
                 const actualResult = card.querySelector('textarea[name^="actualResult_"]').value;
-                const expectedResult = card.querySelector('textarea[name^="expectedResultVerified_"]').value;
 
-                if (status && actualResult && expectedResult) {
+                if (executedBy && status && actualResult) {
                     completed++;
                 }
             });
@@ -233,17 +282,10 @@
             const percentage = (completed / totalTestCases) * 100;
             progressBar.style.width = percentage + '%';
             progressText.textContent = completed + '/' + totalTestCases + ' completed';
-
-            if (completed === totalTestCases) {
-                progressBar.classList.add('bg-success');
-            } else {
-                progressBar.classList.remove('bg-success');
-                progressBar.classList.add('bg-info');
-            }
         }
 
         // Add event listeners to all form fields
-        document.querySelectorAll('.test-case-card select, .test-case-card textarea').forEach(field => {
+        document.querySelectorAll('.test-case-card input, .test-case-card select, .test-case-card textarea').forEach(field => {
             field.addEventListener('change', updateProgress);
             field.addEventListener('keyup', updateProgress);
         });

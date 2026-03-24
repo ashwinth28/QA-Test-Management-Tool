@@ -178,13 +178,12 @@ public class TestCaseController {
         return "execute-testcase";
     }
 
-    // FIXED VERSION - With correct email placement
+    // FIXED: Updated saveExecution with correct mandatory fields
     @PostMapping("/execute/save")
     public String saveExecution(
             @RequestParam(value = "testCaseId", required = false) Long testCaseId,
             @RequestParam(value = "executedBy", required = false) String executedBy,
             @RequestParam(value = "actualResult", required = false) String actualResult,
-            @RequestParam(value = "expectedResultVerified", required = false) String expectedResultVerified,
             @RequestParam(value = "status", required = false) String statusStr,
             @RequestParam(value = "remarks", required = false) String remarks,
             RedirectAttributes redirectAttributes) {
@@ -194,7 +193,6 @@ public class TestCaseController {
         logger.info("testCaseId: {}", testCaseId);
         logger.info("executedBy: {}", executedBy);
         logger.info("actualResult: {}", actualResult);
-        logger.info("expectedResultVerified: {}", expectedResultVerified);
         logger.info("statusStr: {}", statusStr);
         logger.info("remarks: {}", remarks);
         logger.info("==========================================");
@@ -210,9 +208,9 @@ public class TestCaseController {
             missingFields.add("Executed By");
             logger.error("executedBy is NULL or empty!");
         }
-        if (expectedResultVerified == null || expectedResultVerified.trim().isEmpty()) {
-            missingFields.add("Expected Results");
-            logger.error("expectedResultVerified is NULL or empty!");
+        if (actualResult == null || actualResult.trim().isEmpty()) {
+            missingFields.add("Actual Result");
+            logger.error("actualResult is NULL or empty!");
         }
         if (statusStr == null || statusStr.trim().isEmpty()) {
             missingFields.add("Status");
@@ -242,9 +240,9 @@ public class TestCaseController {
             execution.setTestCase(testCase);
             execution.setExecutedBy(executedBy);
             execution.setStatus(status);
-            execution.setRemarks(remarks);
+            execution.setRemarks(remarks != null ? remarks : "");
             execution.setActualResult(actualResult);
-            execution.setExpectedResultVerified(expectedResultVerified);
+            execution.setExpectedResultVerified("Executed: " + actualResult);
             execution.setExecutedOn(LocalDateTime.now());
 
             logger.info("Saving execution with testCase ID: {}", execution.getTestCase().getId());
@@ -252,17 +250,17 @@ public class TestCaseController {
             executionRepository.save(execution);
             logger.info("Execution saved successfully with ID: {}", execution.getId());
 
-            // FIXED: Email notification AFTER execution is saved (not before)
-            // This line should only be here, not duplicated
+            // Email notification after execution is saved
             emailService.sendExecutionNotification(testCase, execution);
 
-            // Update test case
+            // Update test case status and actual result
             testCase.setStatus(status);
             testCase.setExecutedOn(LocalDateTime.now());
+            testCase.setActualResult(actualResult);
             testCaseRepository.save(testCase);
             logger.info("Test case updated with new status: {}", status);
 
-            // Send updates
+            // Send real-time updates
             updateService.sendTestCaseUpdate(testCase);
             updateService.sendDashboardUpdate();
 

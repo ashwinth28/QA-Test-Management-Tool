@@ -40,7 +40,7 @@ public class DashboardController {
         private SimpMessagingTemplate messagingTemplate;
 
         @Autowired
-        private ActiveUserService activeUserService; // ADD THIS LINE
+        private ActiveUserService activeUserService;
 
         @GetMapping("/")
         public String index() {
@@ -60,7 +60,7 @@ public class DashboardController {
                 double passRate = totalTestCases > 0 ? (passedTests * 100.0 / totalTestCases) : 0;
 
                 // Format to 1 decimal place
-                String formattedPassRateS = String.format("%.1f", passRate);
+                String formattedPassRate = String.format("%.1f", passRate);
 
                 // Recent executions (last 7 days)
                 LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
@@ -90,14 +90,14 @@ public class DashboardController {
                 model.addAttribute("failedTests", failedTests);
                 model.addAttribute("blockedTests", blockedTests);
                 model.addAttribute("pendingTests", pendingTests);
-                model.addAttribute("passRate", formattedPassRateS); // Use formatted value
+                model.addAttribute("passRate", formattedPassRate);
                 model.addAttribute("recentExecutions", recentExecutions);
                 model.addAttribute("statusDistribution", statusMap);
                 model.addAttribute("priorityDistribution", priorityMap);
                 model.addAttribute("dailyExecutions", dailyExecutions);
                 model.addAttribute("lastUpdated",
                                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                model.addAttribute("activeUsers", activeUserService.getActiveUserCount()); // ADD THIS LINE
+                model.addAttribute("activeUsers", activeUserService.getActiveUserCount());
 
                 // Trigger a dashboard update via WebSocket (using the service)
                 updateService.sendDashboardUpdate();
@@ -130,7 +130,7 @@ public class DashboardController {
                 metrics.put("pending", pending);
                 metrics.put("active", active);
                 metrics.put("skipped", skipped);
-                metrics.put("passRate", roundedPassRate); // Use rounded value
+                metrics.put("passRate", roundedPassRate);
 
                 // Recent activity
                 LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
@@ -217,7 +217,6 @@ public class DashboardController {
                 return health;
         }
 
-        // FIXED: This method now returns actual executions instead of top executors
         @GetMapping("/dashboard/widgets/recent-executions")
         public String getRecentExecutionsWidget(Model model) {
                 Pageable pageable = PageRequest.of(0, 5, Sort.by("executedOn").descending());
@@ -278,7 +277,6 @@ public class DashboardController {
                 return response;
         }
 
-        // Add this method to get active users count
         @GetMapping("/dashboard/active-users")
         @ResponseBody
         public Map<String, Object> getActiveUsers() {
