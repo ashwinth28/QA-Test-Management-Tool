@@ -1,7 +1,5 @@
 package com.qa.testmanagement.model.api;
 
-import java.util.List;
-
 public class TestSuiteExecutionRequest {
     private Long suiteId;
     private String executedBy;
