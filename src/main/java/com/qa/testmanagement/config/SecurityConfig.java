@@ -30,12 +30,21 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
+                        // Public pages
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
+                        // API endpoints - PUBLIC (or you can add API key filter later)
+                        .requestMatchers("/api/**").permitAll()
+                        // Swagger UI
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        // Admin only
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Tester and Admin can create/edit/delete
                         .requestMatchers("/testcases/new", "/testcases/edit/**", "/testcases/delete/**")
                         .hasAnyRole("ADMIN", "TESTER")
                         .requestMatchers("/testcases/execute/**", "/executions/**").hasAnyRole("ADMIN", "TESTER")
                         .requestMatchers("/upload").hasAnyRole("ADMIN", "TESTER")
+                        .requestMatchers("/reports/**").hasAnyRole("ADMIN", "TESTER")
+                        // All authenticated users can view
                         .requestMatchers("/dashboard", "/testcases/list", "/executions/history/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
