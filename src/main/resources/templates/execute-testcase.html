@@ -3,9 +3,12 @@
 
 <head>
     <title>Execute Test Case - QA Portal</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        /* Your existing styles... */
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --success-gradient: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
@@ -112,11 +115,23 @@
         .form-select.is-invalid {
             border-color: #e74a3b;
             background-image: none;
+            animation: shake 0.3s ease-in-out;
         }
 
-        .form-control.is-invalid:focus,
-        .form-select.is-invalid:focus {
-            box-shadow: 0 0 0 0.2rem rgba(231, 74, 59, 0.25);
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
 
         .badge-status {
@@ -165,22 +180,13 @@
             border-color: #4e73df;
         }
 
-        .btn-cancel i {
-            margin-right: 5px;
-        }
-
         .error-message {
             color: #e74a3b;
             font-size: 0.875rem;
             margin-top: 0.5rem;
-            padding-left: 15px;
             display: flex;
             align-items: center;
             gap: 5px;
-        }
-
-        .error-message i {
-            font-size: 1rem;
         }
 
         .info-text {
@@ -192,10 +198,6 @@
             gap: 5px;
         }
 
-        .info-text i {
-            color: #4e73df;
-        }
-
         .expected-result-box {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-left: 4px solid #4e73df;
@@ -203,22 +205,6 @@
             border-radius: 12px;
             margin-bottom: 25px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .expected-result-box p {
-            margin-bottom: 5px;
-        }
-
-        .expected-result-box .label {
-            font-weight: 600;
-            color: #4e73df;
-            margin-bottom: 8px;
-        }
-
-        .expected-result-box .content {
-            color: #495057;
-            line-height: 1.6;
-            white-space: pre-wrap;
         }
 
         .test-case-details {
@@ -252,7 +238,6 @@
             color: #6c757d;
         }
 
-        /* Popup message styles */
         .alert-popup {
             position: fixed;
             top: 20px;
@@ -289,43 +274,11 @@
             color: white;
         }
 
-        .alert i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-
-        .btn-close-white {
-            filter: brightness(0) invert(1);
-        }
-
         .card-footer-actions {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-top: 30px;
-        }
-
-        .character-count {
-            font-size: 0.8rem;
-            color: #6c757d;
-            text-align: right;
-            margin-top: 5px;
-        }
-
-        .character-count i {
-            margin-right: 3px;
-            color: #4e73df;
-        }
-
-        .info-tooltip {
-            display: inline-block;
-            margin-left: 5px;
-            color: #4e73df;
-            cursor: help;
-        }
-
-        .info-tooltip:hover {
-            color: #764ba2;
         }
 
         .loading-overlay {
@@ -366,12 +319,6 @@
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 25px;
-            transition: all 0.3s;
-        }
-
-        .form-section:hover {
-            background: white;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
 
         .section-title {
@@ -381,10 +328,6 @@
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e9ecef;
-        }
-
-        .section-title i {
-            margin-right: 8px;
         }
 
         @media (max-width: 576px) {
@@ -409,10 +352,6 @@
             .btn-submit,
             .btn-cancel {
                 width: 100%;
-            }
-
-            .page-title h3 {
-                font-size: 1.6rem;
             }
 
             .alert-popup {
@@ -468,22 +407,11 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                            data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i>
                             <span th:text="${#authentication != null ? #authentication.name : 'Guest'}">User</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <span class="dropdown-item-text text-muted small">
-                                    <i class="bi bi-shield-lock"></i>
-                                    Role: <span
-                                        th:text="${#authentication != null ? #authentication.authorities.iterator().next().toString().replace('ROLE_', '') : 'N/A'}">Admin</span>
-                                </span>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
                             <li>
                                 <form th:action="@{/logout}" method="post">
                                     <button type="submit" class="dropdown-item text-danger">
@@ -537,10 +465,6 @@
                         <span class="detail-value" th:text="${testcase.testCaseId}"></span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">DB ID:</span>
-                        <span class="detail-value text-primary fw-bold" th:text="${testcase.id}"></span>
-                    </div>
-                    <div class="detail-item">
                         <span class="detail-label">Precondition:</span>
                         <span class="detail-value" th:text="${testcase.precondition} ?: 'None'"></span>
                     </div>
@@ -555,9 +479,7 @@
                     <div class="label">
                         <i class="bi bi-eye"></i> Expected Result
                     </div>
-                    <div class="content" th:text="${testcase.expectedResult} ?: 'No expected result specified'">
-                        Expected result here
-                    </div>
+                    <div class="content" th:text="${testcase.expectedResult} ?: 'No expected result specified'"></div>
                 </div>
 
                 <!-- Current Status Badge -->
@@ -572,209 +494,131 @@
                 </div>
             </div>
 
-            <!-- Execution Form Section -->
+            <!-- Execution Form Section - WITH CSRF TOKEN -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="bi bi-pencil-square"></i> Execution Details
                 </div>
 
-                <form action="/testcases/execute/save" method="post" id="executionForm">
+                <form action="/testcases/execute/save" method="post" id="executionForm" novalidate>
+                    <!-- CSRF Token - CRITICAL for POST requests -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
                     <input type="hidden" name="testCaseId" th:value="${testcase.id}" />
 
                     <!-- Executed By (Mandatory) -->
                     <div class="mb-4">
-                        <label class="form-label required-field">
-                            <i class="bi bi-person"></i> Executed By
-                            <span class="info-tooltip" data-bs-toggle="tooltip"
-                                title="Name of the person executing this test">
-                                <i class="bi bi-question-circle"></i>
-                            </span>
-                        </label>
-                        <input type="text" name="executedBy" class="form-control" placeholder="Enter your name"
-                            required>
+                        <label class="form-label required-field">Executed By</label>
+                        <input type="text" name="executedBy" class="form-control" id="executedBy"
+                            placeholder="Enter your name">
                         <div class="error-message" id="executedByError"></div>
                     </div>
 
-                    <!-- Actual Result (Editable, Mandatory) -->
+                    <!-- Actual Result (Mandatory) -->
                     <div class="mb-4">
-                        <label class="form-label required-field">
-                            <i class="bi bi-check-circle"></i> Actual Result
-                            <span class="info-tooltip" data-bs-toggle="tooltip"
-                                title="Describe what actually happened during execution">
-                                <i class="bi bi-question-circle"></i>
-                            </span>
-                        </label>
-                        <textarea name="actualResult" class="form-control" rows="3"
-                            placeholder="Describe what actually happened during execution" required></textarea>
+                        <label class="form-label required-field">Actual Result</label>
+                        <textarea name="actualResult" class="form-control" rows="3" id="actualResult"
+                            placeholder="Describe what actually happened during execution"></textarea>
                         <div class="error-message" id="actualResultError"></div>
                     </div>
 
                     <!-- Status (Mandatory) -->
                     <div class="mb-4">
-                        <label class="form-label required-field">
-                            <i class="bi bi-flag"></i> Status
-                        </label>
-                        <select name="status" class="form-select" id="statusSelect" required>
+                        <label class="form-label required-field">Status</label>
+                        <select name="status" class="form-select" id="statusSelect">
                             <option value="">Select Status</option>
                             <option th:each="status : ${statuses}" th:value="${status.name()}"
-                                th:text="${status.displayName}">
-                            </option>
+                                th:text="${status.displayName}"></option>
                         </select>
                         <div class="error-message" id="statusError"></div>
                     </div>
 
                     <!-- Remarks (Optional) -->
                     <div class="mb-4">
-                        <label class="form-label">
-                            <i class="bi bi-chat"></i> Remarks
-                        </label>
+                        <label class="form-label">Remarks</label>
                         <textarea name="remarks" class="form-control" rows="2" id="remarks"
                             placeholder="Additional comments or notes"></textarea>
-                        <div class="character-count">
-                            <i class="bi bi-text-paragraph"></i> <span id="remarksCount">0</span>/1000
-                        </div>
                     </div>
 
-                    <!-- Form Actions -->
                     <div class="card-footer-actions">
-                        <a href="/testcases/list" class="btn-cancel">
-                            <i class="bi bi-x-lg"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn-submit" onclick="showLoading()">
-                            <i class="bi bi-check-lg"></i> Save Execution
-                        </button>
+                        <a href="/testcases/list" class="btn-cancel">Cancel</a>
+                        <button type="submit" class="btn-submit">Save Execution</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- WebSocket for real-time updates -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <script th:inline="javascript">
         /*<![CDATA[*/
         const testcaseId = /*[[${testcase.id}]]*/ 0;
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeTooltips();
-            initializeCharacterCounters();
-            initializeWebSocket();
-            initializeFormValidation();
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const executionForm = document.getElementById('executionForm');
 
-            // Auto-hide alerts after 5 seconds
-            setTimeout(function () {
-                document.querySelectorAll('.alert').forEach(function (alert) {
-                    alert.style.transition = 'opacity 0.5s';
-                    alert.style.opacity = '0';
-                    setTimeout(function () {
-                        alert.remove();
-                    }, 500);
-                });
+        // Simple show/hide loading functions
+        function showLoading() {
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+        }
+
+        // Simple notification function
+        function showNotification(message, type) {
+            document.querySelectorAll('.alert-popup-custom').forEach(el => el.remove());
+
+            const bgColor = type === 'danger' ? '#e74a3b' : (type === 'success' ? '#1cc88a' : '#4e73df');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show alert-popup-custom';
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '400px';
+            alertDiv.style.maxWidth = '600px';
+            alertDiv.style.background = bgColor;
+            alertDiv.style.color = 'white';
+            alertDiv.style.borderRadius = '10px';
+            alertDiv.style.padding = '15px';
+            alertDiv.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+            alertDiv.style.fontSize = '14px';
+            alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'danger' ? 'exclamation-triangle-fill' : 'check-circle-fill'} me-2"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close btn-close-white" style="float: right;" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv && alertDiv.parentElement) alertDiv.remove();
             }, 5000);
-        });
-
-        // Initialize tooltips
-        function initializeTooltips() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
         }
 
-        // Initialize character counters
-        function initializeCharacterCounters() {
-            const remarks = document.getElementById('remarks');
-            if (remarks) {
-                remarks.addEventListener('input', function () {
-                    document.getElementById('remarksCount').textContent = this.value.length;
-                });
-            }
-        }
+        // Scroll to element with offset
+        function scrollToElement(element) {
+            if (!element) return;
 
-        // Initialize form validation
-        function initializeFormValidation() {
-            const form = document.getElementById('executionForm');
+            const elementRect = element.getBoundingClientRect();
+            const absoluteElementTop = elementRect.top + window.pageYOffset;
+            const offset = 120;
 
-            if (!form) {
-                console.error('Form not found!');
-                return;
-            }
-
-            form.addEventListener('submit', function (e) {
-                let isValid = true;
-                let errorMessage = '';
-
-                // Clear previous errors
-                document.querySelectorAll('.error-message').forEach(el => {
-                    el.innerHTML = '';
-                    el.style.display = 'none';
-                });
-                document.querySelectorAll('.form-control, .form-select').forEach(el => {
-                    el.classList.remove('is-invalid');
-                });
-
-                // Validate Executed By
-                const executedBy = document.querySelector('[name="executedBy"]');
-                if (!executedBy || !executedBy.value.trim()) {
-                    showFieldError(executedBy, 'executedByError', 'Executed By is required');
-                    isValid = false;
-                    errorMessage += 'Executed By, ';
-                }
-
-                // Validate Actual Result
-                const actualResult = document.querySelector('[name="actualResult"]');
-                if (!actualResult || !actualResult.value.trim()) {
-                    showFieldError(actualResult, 'actualResultError', 'Actual Result is required');
-                    isValid = false;
-                    errorMessage += 'Actual Result, ';
-                }
-
-                // Validate Status
-                const status = document.getElementById('statusSelect');
-                if (!status || !status.value) {
-                    showFieldError(status, 'statusError', 'Status is required');
-                    isValid = false;
-                    errorMessage += 'Status, ';
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Remove trailing comma and show alert
-                    errorMessage = errorMessage.slice(0, -2);
-                    showNotification('Please fill all required fields: ' + errorMessage, 'danger');
-                    hideLoading();
-                    return false;
-                }
-
-                // If valid, show loading overlay and allow form submission
-                showLoading();
-                return true;
+            window.scrollTo({
+                top: absoluteElementTop - offset,
+                behavior: 'smooth'
             });
 
-            // Remove error on input
-            document.querySelectorAll('.form-control, .form-select').forEach(element => {
-                element.addEventListener('input', function () {
-                    this.classList.remove('is-invalid');
-                    // Clear the error message for this field
-                    if (this.id) {
-                        const errorEl = document.getElementById(this.id + 'Error');
-                        if (errorEl) {
-                            errorEl.innerHTML = '';
-                            errorEl.style.display = 'none';
-                        }
-                    }
-                });
-            });
+            element.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+            element.style.boxShadow = '0 0 0 3px rgba(231, 74, 59, 0.5)';
+            element.style.borderColor = '#e74a3b';
+            setTimeout(() => {
+                element.style.boxShadow = '';
+                element.style.borderColor = '';
+            }, 2000);
         }
 
         // Show field error
@@ -783,110 +627,95 @@
                 field.classList.add('is-invalid');
             }
             const errorEl = document.getElementById(errorId);
-            if (errorEl) {
-                errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + message;
-                errorEl.style.display = 'block';
-            }
+            if (errorEl) errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + message;
         }
 
-        // Show loading overlay - Simplified without timeout
-        function showLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
-        }
-
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-        }
-
-        // WebSocket Connection
-        function initializeWebSocket() {
-            const socketExec = new SockJS('/ws');
-            const stompExec = Stomp.over(socketExec);
-
-            stompExec.connect({}, function (frame) {
-                console.log('Connected to WebSocket for execution updates');
-
-                stompExec.subscribe('/topic/testcase-updates', function (message) {
-                    const updated = JSON.parse(message.body);
-
-                    if (updated.id == testcaseId) {
-                        showNotification('This test case has been updated by another QA: ' + updated.status, 'warning');
-
-                        // Update status badge
-                        const statusBadge = document.getElementById('statusBadge');
-                        if (statusBadge) {
-                            let badgeClass = 'bg-secondary';
-                            let statusText = updated.status;
-
-                            if (updated.status === 'PASS') badgeClass = 'bg-success';
-                            else if (updated.status === 'FAIL') badgeClass = 'bg-danger';
-                            else if (updated.status === 'BLOCKED') badgeClass = 'bg-warning';
-
-                            statusBadge.className = 'badge ' + badgeClass;
-                            statusBadge.textContent = statusText;
-                        }
-                    }
-                });
-            }, function (error) {
-                console.error('WebSocket connection error:', error);
-                setTimeout(initializeWebSocket, 5000);
+        // Clear all errors
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.innerHTML = '');
+            document.querySelectorAll('.form-control, .form-select').forEach(el => {
+                el.classList.remove('is-invalid');
             });
         }
 
-        // Show notification
-        function showNotification(message, type) {
-            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
-            const toastId = 'toast-' + Date.now();
+        // Form validation and submission
+        if (executionForm) {
+            executionForm.addEventListener('submit', function (e) {
+                clearErrors();
 
-            const bgColor = {
-                'success': 'bg-success',
-                'danger': 'bg-danger',
-                'warning': 'bg-warning',
-                'info': 'bg-info'
-            }[type] || 'bg-info';
+                let isValid = true;
+                let missingFields = [];
+                let firstInvalidField = null;
 
-            const icon = {
-                'success': 'bi-check-circle-fill',
-                'danger': 'bi-exclamation-triangle-fill',
-                'warning': 'bi-exclamation-circle-fill',
-                'info': 'bi-info-circle-fill'
-            }[type] || 'bi-info-circle-fill';
+                const executedBy = document.querySelector('[name="executedBy"]');
+                if (!executedBy || !executedBy.value.trim()) {
+                    showFieldError(executedBy, 'executedByError', 'Executed By is required');
+                    isValid = false;
+                    missingFields.push('Executed By');
+                    if (!firstInvalidField) firstInvalidField = executedBy;
+                }
 
-            const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi ${icon} me-2"></i>
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
+                const actualResult = document.querySelector('[name="actualResult"]');
+                if (!actualResult || !actualResult.value.trim()) {
+                    showFieldError(actualResult, 'actualResultError', 'Actual Result is required');
+                    isValid = false;
+                    missingFields.push('Actual Result');
+                    if (!firstInvalidField) firstInvalidField = actualResult;
+                }
 
-            document.body.insertAdjacentHTML('beforeend', toastHtml);
+                const statusSelect = document.getElementById('statusSelect');
+                if (!statusSelect || !statusSelect.value) {
+                    showFieldError(statusSelect, 'statusError', 'Status is required');
+                    isValid = false;
+                    missingFields.push('Status');
+                    if (!firstInvalidField) firstInvalidField = statusSelect;
+                }
 
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                const toast = document.getElementById(toastId);
-                if (toast) toast.remove();
-            }, 5000);
+                if (!isValid) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (firstInvalidField) {
+                        firstInvalidField.focus();
+                        setTimeout(() => {
+                            scrollToElement(firstInvalidField);
+                        }, 100);
+                    }
+
+                    showNotification('Please fill all required fields: ' + missingFields.join(', '), 'danger');
+                    return false;
+                }
+
+                showLoading();
+                return true;
+            });
         }
 
-        function createToastContainer() {
-            const container = document.createElement('div');
-            container.id = 'toastContainer';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-            return container;
-        }
+        // Remove error on input
+        document.querySelectorAll('.form-control, .form-select').forEach(element => {
+            element.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                const errorId = this.id + 'Error';
+                const errorEl = document.getElementById(errorId);
+                if (errorEl) errorEl.innerHTML = '';
+            });
 
+            element.addEventListener('change', function () {
+                this.classList.remove('is-invalid');
+                const errorId = this.id + 'Error';
+                const errorEl = document.getElementById(errorId);
+                if (errorEl) errorEl.innerHTML = '';
+            });
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function () {
+            document.querySelectorAll('.alert').forEach(function (alert) {
+                setTimeout(function () {
+                    if (alert && alert.parentElement) alert.remove();
+                }, 5000);
+            });
+        }, 5000);
         /*]]>*/
     </script>
 </body>

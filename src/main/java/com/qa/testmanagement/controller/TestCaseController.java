@@ -178,7 +178,7 @@ public class TestCaseController {
         return "execute-testcase";
     }
 
-    // FIXED: Updated saveExecution with correct mandatory fields
+    // FIXED: Updated saveExecution with proper redirect and error handling
     @PostMapping("/execute/save")
     public String saveExecution(
             @RequestParam(value = "testCaseId", required = false) Long testCaseId,
@@ -221,7 +221,12 @@ public class TestCaseController {
             String errorMsg = "Please fill all required fields: " + String.join(", ", missingFields) + " are mandatory";
             logger.error(errorMsg);
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
-            return "redirect:/testcases/execute/" + (testCaseId != null ? testCaseId : "");
+
+            // Make sure we have a valid testCaseId for redirect
+            if (testCaseId != null) {
+                return "redirect:/testcases/execute/" + testCaseId;
+            }
+            return "redirect:/testcases/list";
         }
 
         try {
@@ -247,11 +252,8 @@ public class TestCaseController {
 
             logger.info("Saving execution with testCase ID: {}", execution.getTestCase().getId());
 
-            executionRepository.save(execution);
-            logger.info("Execution saved successfully with ID: {}", execution.getId());
-
-            // Email notification after execution is saved
-            emailService.sendExecutionNotification(testCase, execution);
+            Execution savedExecution = executionRepository.save(execution);
+            logger.info("Execution saved successfully with ID: {}", savedExecution.getId());
 
             // Update test case status and actual result
             testCase.setStatus(status);
@@ -264,18 +266,33 @@ public class TestCaseController {
             updateService.sendTestCaseUpdate(testCase);
             updateService.sendDashboardUpdate();
 
+            // Try to send email notification (don't let email failure affect the execution)
+            try {
+                emailService.sendExecutionNotification(testCase, execution);
+                logger.info("Email notification sent successfully");
+            } catch (Exception e) {
+                logger.error("Email notification failed: {}", e.getMessage());
+                // Don't fail the execution if email fails
+            }
+
             redirectAttributes.addFlashAttribute("successMessage",
                     "✅ Execution saved successfully! Status: " + status.getDisplayName());
 
         } catch (IllegalArgumentException e) {
             logger.error("Invalid status value: {}", statusStr, e);
             redirectAttributes.addFlashAttribute("errorMessage", "❌ Invalid status value: " + statusStr);
-            return "redirect:/testcases/execute/" + testCaseId;
+            if (testCaseId != null) {
+                return "redirect:/testcases/execute/" + testCaseId;
+            }
+            return "redirect:/testcases/list";
         } catch (Exception e) {
             logger.error("Error saving execution", e);
             redirectAttributes.addFlashAttribute("errorMessage", "❌ Error saving execution: " + e.getMessage());
             e.printStackTrace();
-            return "redirect:/testcases/execute/" + testCaseId;
+            if (testCaseId != null) {
+                return "redirect:/testcases/execute/" + testCaseId;
+            }
+            return "redirect:/testcases/list";
         }
 
         return "redirect:/testcases/list";
