@@ -30,9 +30,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        // Public pages
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
-                        // API endpoints - MAKE PUBLIC
+                        // IMPORTANT: These MUST be permitAll to access login page
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
+                        // API endpoints - public
                         .requestMatchers("/api/**").permitAll()
                         // Swagger UI
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
@@ -44,11 +44,12 @@ public class SecurityConfig {
                         .requestMatchers("/testcases/execute/**", "/executions/**").hasAnyRole("ADMIN", "TESTER")
                         .requestMatchers("/upload").hasAnyRole("ADMIN", "TESTER")
                         .requestMatchers("/reports/**").hasAnyRole("ADMIN", "TESTER")
-                        // All authenticated users can view
+                        // All authenticated users can view dashboard and test cases
                         .requestMatchers("/dashboard", "/testcases/list", "/executions/history/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .loginProcessingUrl("/login")
                         .successHandler(customAuthenticationSuccessHandler())
                         .permitAll())
                 .logout(logout -> logout
