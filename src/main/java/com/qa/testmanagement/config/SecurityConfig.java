@@ -32,10 +32,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Public pages
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
-                        // API endpoints - PUBLIC (or you can add API key filter later)
+                        // API endpoints - MAKE PUBLIC
                         .requestMatchers("/api/**").permitAll()
                         // Swagger UI
-                        .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         // Admin only
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // Tester and Admin can create/edit/delete
@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .tokenValiditySeconds(86400))
                 .userDetailsService(userDetailsService)
                 .sessionManagement(session -> session
-                        .maximumSessions(100) // Maximum concurrent sessions per user
+                        .maximumSessions(100)
                         .expiredUrl("/login?expired"));
 
         return http.build();
@@ -74,7 +74,6 @@ public class SecurityConfig {
             HttpSession session = request.getSession(true);
             String sessionId = session.getId();
 
-            // Track active user
             activeUserService.userLoggedIn(username, sessionId);
             session.setAttribute("username", username);
 
