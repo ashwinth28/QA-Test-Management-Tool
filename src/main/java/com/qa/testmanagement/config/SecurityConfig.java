@@ -29,10 +29,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // Disable CSRF for API endpoints (important for POST requests)
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(authz -> authz
                         // IMPORTANT: These MUST be permitAll to access login page
                         .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
-                        // API endpoints - public
+                        // API endpoints - ALL METHODS public
                         .requestMatchers("/api/**").permitAll()
                         // Swagger UI
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
