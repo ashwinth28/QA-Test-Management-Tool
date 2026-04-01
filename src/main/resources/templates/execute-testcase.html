@@ -330,6 +330,40 @@
             border-bottom: 2px solid #e9ecef;
         }
 
+        /* Image preview styles */
+        .image-preview-container {
+            margin-top: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .preview-img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: #fff;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #e74a3b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .remove-image-btn:hover {
+            background: #be2617;
+        }
+
         @media (max-width: 576px) {
             .main-card {
                 padding: 30px 20px;
@@ -494,13 +528,14 @@
                 </div>
             </div>
 
-            <!-- Execution Form Section - WITH CSRF TOKEN -->
+            <!-- Execution Form Section - WITH SCREENSHOT UPLOAD -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="bi bi-pencil-square"></i> Execution Details
                 </div>
 
-                <form action="/testcases/execute/save" method="post" id="executionForm" novalidate>
+                <form action="/testcases/execute/save-with-screenshot" method="post" id="executionForm"
+                    enctype="multipart/form-data" novalidate>
                     <!-- CSRF Token - CRITICAL for POST requests -->
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
@@ -533,6 +568,28 @@
                         <div class="error-message" id="statusError"></div>
                     </div>
 
+                    <!-- Screenshot Upload (Optional) -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-camera"></i> Screenshot
+                            <span class="info-tooltip" data-bs-toggle="tooltip"
+                                title="Attach a screenshot (PNG, JPG, max 5MB)">
+                                <i class="bi bi-question-circle"></i>
+                            </span>
+                        </label>
+                        <input type="file" name="screenshot" id="screenshot" class="form-control" accept="image/*"
+                            onchange="previewImage(this)">
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <div class="image-preview-container">
+                                <img id="previewImg" class="preview-img" src="">
+                                <button type="button" class="remove-image-btn" onclick="clearImage()">×</button>
+                            </div>
+                        </div>
+                        <div class="info-text">
+                            <i class="bi bi-info-circle"></i> Supported formats: PNG, JPG, JPEG. Max size: 5MB
+                        </div>
+                    </div>
+
                     <!-- Remarks (Optional) -->
                     <div class="mb-4">
                         <label class="form-label">Remarks</label>
@@ -557,6 +614,48 @@
         // DOM Elements
         const loadingOverlay = document.getElementById('loadingOverlay');
         const executionForm = document.getElementById('executionForm');
+
+        // Image preview function
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const img = document.getElementById('previewImg');
+
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('File size exceeds 5MB limit', 'danger');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Only image files are allowed', 'danger');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+                img.src = '';
+            }
+        }
+
+        // Clear image function
+        function clearImage() {
+            document.getElementById('screenshot').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('previewImg').src = '';
+        }
 
         // Simple show/hide loading functions
         function showLoading() {

@@ -7,6 +7,7 @@ import com.qa.testmanagement.repository.TestCaseRepository;
 import com.qa.testmanagement.repository.ExecutionRepository;
 import com.qa.testmanagement.service.EmailService;
 import com.qa.testmanagement.service.TestCaseUpdateService;
+import com.qa.testmanagement.service.FileUploadService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -48,6 +50,9 @@ public class TestCaseController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @ModelAttribute("allStatuses")
     public List<TestStatus> populateStatuses() {
@@ -178,7 +183,7 @@ public class TestCaseController {
         return "execute-testcase";
     }
 
-    // FIXED: Updated saveExecution with proper redirect and error handling
+    // Existing saveExecution method (keep as is)
     @PostMapping("/execute/save")
     public String saveExecution(
             @RequestParam(value = "testCaseId", required = false) Long testCaseId,
@@ -222,7 +227,6 @@ public class TestCaseController {
             logger.error(errorMsg);
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
 
-            // Make sure we have a valid testCaseId for redirect
             if (testCaseId != null) {
                 return "redirect:/testcases/execute/" + testCaseId;
             }
@@ -230,17 +234,14 @@ public class TestCaseController {
         }
 
         try {
-            // Convert status string to enum
             TestStatus status = TestStatus.valueOf(statusStr);
             logger.info("Converted status to enum: {}", status);
 
-            // Fetch the test case
             TestCase testCase = testCaseRepository.findById(testCaseId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid test case Id: " + testCaseId));
 
             logger.info("Found test case with ID: {}, Name: {}", testCase.getId(), testCase.getTestCaseName());
 
-            // Create and save execution
             Execution execution = new Execution();
             execution.setTestCase(testCase);
             execution.setExecutedBy(executedBy);
@@ -255,24 +256,20 @@ public class TestCaseController {
             Execution savedExecution = executionRepository.save(execution);
             logger.info("Execution saved successfully with ID: {}", savedExecution.getId());
 
-            // Update test case status and actual result
             testCase.setStatus(status);
             testCase.setExecutedOn(LocalDateTime.now());
             testCase.setActualResult(actualResult);
             testCaseRepository.save(testCase);
             logger.info("Test case updated with new status: {}", status);
 
-            // Send real-time updates
             updateService.sendTestCaseUpdate(testCase);
             updateService.sendDashboardUpdate();
 
-            // Try to send email notification (don't let email failure affect the execution)
             try {
                 emailService.sendExecutionNotification(testCase, execution);
                 logger.info("Email notification sent successfully");
             } catch (Exception e) {
                 logger.error("Email notification failed: {}", e.getMessage());
-                // Don't fail the execution if email fails
             }
 
             redirectAttributes.addFlashAttribute("successMessage",
@@ -293,6 +290,109 @@ public class TestCaseController {
                 return "redirect:/testcases/execute/" + testCaseId;
             }
             return "redirect:/testcases/list";
+        }
+
+        return "redirect:/testcases/list";
+    }
+
+    // NEW: Save execution with screenshot
+    @PostMapping("/execute/save-with-screenshot")
+    public String saveExecutionWithScreenshot(
+            @RequestParam(value = "testCaseId") Long testCaseId,
+            @RequestParam(value = "executedBy") String executedBy,
+            @RequestParam(value = "actualResult") String actualResult,
+            @RequestParam(value = "status") String statusStr,
+            @RequestParam(value = "remarks", required = false) String remarks,
+            @RequestParam(value = "screenshot", required = false) MultipartFile screenshot,
+            RedirectAttributes redirectAttributes) {
+
+        logger.info("========== SAVE EXECUTION WITH SCREENSHOT ==========");
+        logger.info("testCaseId: {}", testCaseId);
+        logger.info("executedBy: {}", executedBy);
+        logger.info("actualResult: {}", actualResult);
+        logger.info("statusStr: {}", statusStr);
+        logger.info("screenshot: {}", screenshot != null ? screenshot.getOriginalFilename() : "none");
+        logger.info("====================================================");
+
+        // Validate required fields
+        List<String> missingFields = new ArrayList<>();
+
+        if (testCaseId == null) {
+            missingFields.add("Test Case ID");
+        }
+        if (executedBy == null || executedBy.trim().isEmpty()) {
+            missingFields.add("Executed By");
+        }
+        if (actualResult == null || actualResult.trim().isEmpty()) {
+            missingFields.add("Actual Result");
+        }
+        if (statusStr == null || statusStr.trim().isEmpty()) {
+            missingFields.add("Status");
+        }
+
+        if (!missingFields.isEmpty()) {
+            String errorMsg = "Please fill all required fields: " + String.join(", ", missingFields) + " are mandatory";
+            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+            return "redirect:/testcases/execute/" + testCaseId;
+        }
+
+        try {
+            TestStatus status = TestStatus.valueOf(statusStr);
+            TestCase testCase = testCaseRepository.findById(testCaseId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid test case Id: " + testCaseId));
+
+            // Create execution
+            Execution execution = new Execution();
+            execution.setTestCase(testCase);
+            execution.setExecutedBy(executedBy);
+            execution.setStatus(status);
+            execution.setActualResult(actualResult);
+            execution.setRemarks(remarks != null ? remarks : "");
+            execution.setExpectedResultVerified("Executed: " + actualResult);
+            execution.setExecutedOn(LocalDateTime.now());
+
+            // Handle screenshot upload
+            if (screenshot != null && !screenshot.isEmpty()) {
+                try {
+                    String screenshotUrl = fileUploadService.uploadScreenshot(screenshot);
+                    execution.setScreenshotUrl(screenshotUrl);
+                    execution.setScreenshotThumbnailUrl(fileUploadService.getThumbnailUrl(screenshotUrl));
+                    logger.info("Screenshot uploaded: {}", screenshotUrl);
+                } catch (Exception e) {
+                    logger.error("Failed to upload screenshot: {}", e.getMessage());
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "Failed to upload screenshot: " + e.getMessage());
+                    return "redirect:/testcases/execute/" + testCaseId;
+                }
+            }
+
+            executionRepository.save(execution);
+
+            // Update test case
+            testCase.setStatus(status);
+            testCase.setExecutedOn(LocalDateTime.now());
+            testCase.setActualResult(actualResult);
+            testCaseRepository.save(testCase);
+
+            // Send updates
+            updateService.sendTestCaseUpdate(testCase);
+            updateService.sendDashboardUpdate();
+
+            String successMsg = screenshot != null && !screenshot.isEmpty()
+                    ? "✅ Execution saved with screenshot! Status: " + status.getDisplayName()
+                    : "✅ Execution saved successfully! Status: " + status.getDisplayName();
+
+            redirectAttributes.addFlashAttribute("successMessage", successMsg);
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid status value: {}", statusStr, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "❌ Invalid status value: " + statusStr);
+            return "redirect:/testcases/execute/" + testCaseId;
+        } catch (Exception e) {
+            logger.error("Error saving execution with screenshot", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "❌ Error saving execution: " + e.getMessage());
+            e.printStackTrace();
+            return "redirect:/testcases/execute/" + testCaseId;
         }
 
         return "redirect:/testcases/list";
@@ -369,21 +469,15 @@ public class TestCaseController {
     @GetMapping("/export")
     @ResponseBody
     public void exportAllTestCases(HttpServletResponse response) throws IOException {
-        // Set response headers
         response.setContentType("text/csv");
         response.setHeader("Content-Disposition", "attachment; filename=all_testcases_" +
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv");
 
-        // Get all test cases (unpaged)
         List<TestCase> allTestCases = testCaseRepository.findAll(Sort.by("id").descending());
 
-        // Create CSV writer
         PrintWriter writer = response.getWriter();
-
-        // Write CSV header
         writer.println("ID,Test Case ID,Name,Priority,Type,Status");
 
-        // Write data rows
         for (TestCase tc : allTestCases) {
             writer.println(String.format("%d,%s,%s,%s,%s,%s",
                     tc.getId(),
@@ -398,12 +492,9 @@ public class TestCaseController {
         writer.close();
     }
 
-    // Helper method to escape CSV special characters
     private String escapeCsv(String value) {
         if (value == null)
             return "";
-        // If the value contains commas, quotes, or newlines, wrap in quotes and escape
-        // quotes
         if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }

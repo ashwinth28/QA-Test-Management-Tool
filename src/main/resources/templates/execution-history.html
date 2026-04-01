@@ -84,6 +84,35 @@
             font-weight: 600;
             color: #4e73df;
         }
+
+        /* Screenshot thumbnail styles */
+        .screenshot-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid #ddd;
+        }
+
+        .screenshot-thumb:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Modal image styles */
+        .modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+        }
+
+        .no-screenshot {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -196,12 +225,12 @@
                             <th>Expected Result Verified</th>
                             <th>Executed By</th>
                             <th>Executed On</th>
+                            <th>Screenshot</th>
                             <th>Remarks</th>
-                        </tr>
                     </thead>
                     <tbody>
                         <tr th:each="exec, stat : ${executions}" th:classappend="${stat.index == 0} ? 'table-primary'">
-                            <td th:text="${exec.id}"></td>
+                            <td th:text="${exec.id}"> </td>
                             <td>
                                 <span th:switch="${exec.status}" class="badge" th:classappend="${exec.status == 'PASS' ? 'bg-success' : 
                                          exec.status == 'FAIL' ? 'bg-danger' : 
@@ -214,12 +243,23 @@
                             <td th:text="${exec.executedBy}">Tester</td>
                             <td th:text="${#temporals.format(exec.executedOn, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00
                             </td>
+                            <td class="text-center">
+                                <div th:if="${exec.screenshotUrl != null and exec.screenshotUrl != ''}">
+                                    <img th:src="${exec.screenshotThumbnailUrl != null ? exec.screenshotThumbnailUrl : exec.screenshotUrl}"
+                                        th:data-full-url="${exec.screenshotUrl}" class="screenshot-thumb"
+                                        onclick="showFullImage(this)" alt="Screenshot">
+                                </div>
+                                <span th:if="${exec.screenshotUrl == null or exec.screenshotUrl == ''}"
+                                    class="no-screenshot">
+                                    <i class="bi bi-camera"></i> No screenshot
+                                </span>
+                            </td>
                             <td th:text="${exec.remarks} ?: '-'">Remarks</td>
                         </tr>
 
                         <!-- No Data Row -->
                         <tr th:if="${#lists.isEmpty(executions)}">
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-info-circle"></i> No execution history found for this test case.
                             </td>
                         </tr>
@@ -259,7 +299,45 @@
         </div>
     </div>
 
+    <!-- Image Modal for full-size screenshot -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Screenshot</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="fullImage" class="modal-image" src="" alt="Full size screenshot">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a id="downloadImageBtn" href="#" class="btn btn-primary" download="screenshot.jpg">Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show full image modal
+        function showFullImage(imgElement) {
+            const fullImageUrl = imgElement.getAttribute('data-full-url') || imgElement.src;
+            const modalImage = document.getElementById('fullImage');
+            const downloadBtn = document.getElementById('downloadImageBtn');
+
+            modalImage.src = fullImageUrl;
+            downloadBtn.href = fullImageUrl;
+
+            // Extract filename from URL for download
+            const urlParts = fullImageUrl.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            downloadBtn.download = filename;
+
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+    </script>
 </body>
 
 </html>

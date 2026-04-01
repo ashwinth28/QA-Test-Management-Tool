@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -17,7 +19,7 @@ public class Execution {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_case_id", nullable = false)
-    @JsonIgnore  // ADD THIS - Prevents circular reference
+    @JsonIgnore
     private TestCase testCase;
 
     @Enumerated(EnumType.STRING)
@@ -41,6 +43,18 @@ public class Execution {
     @NotBlank(message = "Expected Results is required")
     @Column(name = "expected_result_verified", length = 2000, nullable = false)
     private String expectedResultVerified;
+
+    // NEW: Screenshot fields for attachments
+    @Column(name = "screenshot_url", length = 500)
+    private String screenshotUrl;
+
+    @Column(name = "screenshot_thumbnail_url", length = 500)
+    private String screenshotThumbnailUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "execution_attachments", joinColumns = @JoinColumn(name = "execution_id"))
+    @Column(name = "attachment_url", length = 500)
+    private List<String> attachments = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -110,5 +124,38 @@ public class Execution {
 
     public void setExpectedResultVerified(String expectedResultVerified) {
         this.expectedResultVerified = expectedResultVerified;
+    }
+
+    // NEW: Screenshot getters and setters
+    public String getScreenshotUrl() {
+        return screenshotUrl;
+    }
+
+    public void setScreenshotUrl(String screenshotUrl) {
+        this.screenshotUrl = screenshotUrl;
+    }
+
+    public String getScreenshotThumbnailUrl() {
+        return screenshotThumbnailUrl;
+    }
+
+    public void setScreenshotThumbnailUrl(String screenshotThumbnailUrl) {
+        this.screenshotThumbnailUrl = screenshotThumbnailUrl;
+    }
+
+    public List<String> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<String> attachments) {
+        this.attachments = attachments;
+    }
+
+    // Helper method to add attachment
+    public void addAttachment(String attachmentUrl) {
+        if (this.attachments == null) {
+            this.attachments = new ArrayList<>();
+        }
+        this.attachments.add(attachmentUrl);
     }
 }
