@@ -43,7 +43,7 @@ public class CloudinaryUploadService {
         // Generate unique public ID
         String publicId = "qa-screenshots/" + UUID.randomUUID().toString();
 
-        // Upload to Cloudinary - using HashMap for type safety
+        // Upload to Cloudinary
         Map<String, Object> uploadParams = new HashMap<>();
         uploadParams.put("public_id", publicId);
         uploadParams.put("folder", "qa-test-management");
@@ -75,6 +75,10 @@ public class CloudinaryUploadService {
             return false;
         }
 
+        if (cloudinary == null) {
+            return false;
+        }
+
         try {
             // Extract public ID from URL
             String publicId = extractPublicIdFromUrl(imageUrl);
@@ -82,7 +86,7 @@ public class CloudinaryUploadService {
                 return false;
             }
 
-            // Delete from Cloudinary - using HashMap for type safety
+            // Delete from Cloudinary
             Map<String, Object> deleteParams = new HashMap<>();
             @SuppressWarnings("unchecked")
             Map<String, Object> result = cloudinary.uploader().destroy(publicId, deleteParams);

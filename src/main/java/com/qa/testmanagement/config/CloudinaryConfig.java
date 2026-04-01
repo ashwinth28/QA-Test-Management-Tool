@@ -22,9 +22,10 @@ public class CloudinaryConfig {
 
     @Bean
     public Cloudinary cloudinary() {
-        if (cloudName == null || cloudName.isEmpty() ||
-                apiKey == null || apiKey.isEmpty() ||
-                apiSecret == null || apiSecret.isEmpty()) {
+        // Check if any credentials are missing (empty or null)
+        if (cloudName == null || cloudName.trim().isEmpty() ||
+                apiKey == null || apiKey.trim().isEmpty() ||
+                apiSecret == null || apiSecret.trim().isEmpty()) {
             System.out.println("Cloudinary credentials not configured. Using local storage.");
             return null;
         }
@@ -36,6 +37,7 @@ public class CloudinaryConfig {
         config.put("api_secret", apiSecret);
         config.put("secure", "true");
 
+        System.out.println("Cloudinary configured with cloud name: " + cloudName);
         return new Cloudinary(config);
     }
 }
