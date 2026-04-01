@@ -705,17 +705,20 @@
             dailyExecutions: /*[[${dailyExecutions}]]*/[]
         };
 
-        // System uptime tracking
-        const startTime = new Date();
-
         // Document ready
         document.addEventListener('DOMContentLoaded', function () {
             initializeCharts();
             initializeWebSocket();
             loadRecentActivity();
             initializeEventListeners();
-            startUptimeCounter();
+            updateUptime();  // Call uptime on load
+            updateActiveUsers();  // Call active users on load
             checkSystemHealth();
+
+            // Set up uptime interval (every second)
+            setInterval(updateUptime, 1000);
+            // Set up active users interval (every 10 seconds)
+            setInterval(updateActiveUsers, 10000);
         });
 
         // Initialize Charts
@@ -832,29 +835,25 @@
                 }
             });
 
-            // Daily Chart - FIXED with null check
+            // Daily Chart
             updateDailyChart(dashboardData.dailyExecutions);
         }
 
-        // Update Daily Chart - FIXED with proper error handling
+        // Update Daily Chart
         function updateDailyChart(data) {
             const dailyCtx = document.getElementById('dailyChart').getContext('2d');
 
-            // Destroy existing chart if it exists
             if (dailyChart) {
                 dailyChart.destroy();
             }
 
-            // Default empty data if data is not valid
             let chartData = [];
             let chartLabels = [];
 
-            // Check if data exists and is an array
             if (data && Array.isArray(data) && data.length > 0) {
                 chartLabels = data.map(d => d[0] || '');
                 chartData = data.map(d => d[1] || 0);
             } else {
-                // Provide fallback data
                 console.log('No daily execution data available, using fallback');
                 const last7Days = [];
                 for (let i = 6; i >= 0; i--) {
@@ -913,13 +912,11 @@
                 console.log('Connected to WebSocket:', frame);
                 updateWebSocketStatus(true);
 
-                // Subscribe to dashboard updates
                 stompClient.subscribe(TOPIC_DASHBOARD, function (message) {
                     const data = JSON.parse(message.body);
                     updateDashboard(data);
                 });
 
-                // Subscribe to notifications
                 stompClient.subscribe(TOPIC_NOTIFICATIONS, function (message) {
                     const notification = JSON.parse(message.body);
                     showNotification(notification.message, notification.type);
@@ -934,14 +931,12 @@
 
         // Update Dashboard with real-time data
         function updateDashboard(data) {
-            // Update numbers
             document.getElementById('totalCases').textContent = data.totalTestCases || data.total || 0;
             document.getElementById('passedTests').textContent = data.passedCount || data.passed || 0;
             document.getElementById('failedTests').textContent = data.failedCount || data.failed || 0;
             document.getElementById('blockedTests').textContent = data.blockedCount || data.blocked || 0;
             document.getElementById('pendingTests').textContent = data.pendingCount || data.pending || 0;
 
-            // Calculate and round pass rate to 1 decimal place
             let passRate;
             if (data.passRate !== undefined && data.passRate !== null) {
                 passRate = data.passRate;
@@ -950,8 +945,6 @@
             } else {
                 passRate = 0;
             }
-
-            // Round to 1 decimal place
             passRate = Math.round(passRate * 10) / 10;
 
             document.getElementById('passRate').textContent = passRate;
@@ -961,13 +954,14 @@
                 ((data.totalTestCases || data.total || 0) - (data.passedCount || data.passed || 0));
             document.getElementById('totalCasesBadge').textContent = data.totalTestCases || data.total || 0;
 
-            // Update charts if new distribution data available
             if (data.statusDistribution) {
                 updateStatusChart(data.statusDistribution);
             }
 
-            // Update last updated time
             document.getElementById('lastUpdatedTime').textContent = moment().format('YYYY-MM-DD HH:mm:ss');
+
+            // Refresh active users on dashboard update
+            updateActiveUsers();
         }
 
         // Update Status Chart
@@ -1031,20 +1025,17 @@
                 });
         }
 
-        // Change Chart Period - FIXED with error handling
+        // Change Chart Period
         function changeChartPeriod(days) {
             currentChartPeriod = days;
 
-            // Update button states
             document.querySelectorAll('.btn-group .btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
 
-            // Show loading
             showLoading();
 
-            // Fetch new data - FIXED endpoint
             fetch(`/dashboard/daily-trend?days=${days}`)
                 .then(response => {
                     if (!response.ok) {
@@ -1053,19 +1044,17 @@
                     return response.json();
                 })
                 .then(data => {
-                    // Check if data is valid before updating chart
                     if (data && Array.isArray(data)) {
                         updateDailyChart(data);
                     } else {
                         console.warn('Received invalid data format for daily trend:', data);
-                        updateDailyChart([]); // Use empty array as fallback
+                        updateDailyChart([]);
                         showNotification('No data available for selected period', 'info');
                     }
                 })
                 .catch(error => {
                     console.error('Error loading chart data:', error);
                     showNotification('Error loading chart data', 'danger');
-                    // Use fallback data
                     updateDailyChart([]);
                 })
                 .finally(() => {
@@ -1102,21 +1091,20 @@
             }[type] || 'bi-info-circle-fill';
 
             const toastHtml = `
-                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <i class="bi ${icon} me-2"></i>
-                            ${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" 
-                                data-bs-dismiss="toast" onclick="this.closest('.toast').remove()"></button>
+            <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 show" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${icon} me-2"></i>
+                        ${message}
                     </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                            data-bs-dismiss="toast" onclick="this.closest('.toast').remove()"></button>
                 </div>
-            `;
+            </div>
+        `;
 
             toastContainer.insertAdjacentHTML('beforeend', toastHtml);
 
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 const toast = document.getElementById(toastId);
                 if (toast) toast.remove();
@@ -1125,19 +1113,30 @@
 
         // Initialize Event Listeners
         function initializeEventListeners() {
-            // Auto-refresh every 30 seconds
             setInterval(refreshDashboard, 30000);
         }
 
-        // Start Uptime Counter
-        function startUptimeCounter() {
-            setInterval(() => {
-                const uptime = moment.duration(moment().diff(startTime));
-                const hours = Math.floor(uptime.asHours());
-                const minutes = uptime.minutes();
-                document.getElementById('uptime').textContent =
-                    `${hours}h ${minutes}m`;
-            }, 1000);
+        // UPDATE UPTIME - NEW FUNCTION
+        function updateUptime() {
+            fetch('/dashboard/uptime')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('uptime').textContent = data.uptime;
+                })
+                .catch(error => {
+                    console.error('Error fetching uptime:', error);
+                    document.getElementById('uptime').textContent = '--';
+                });
+        }
+
+        // Update Active Users
+        function updateActiveUsers() {
+            fetch('/dashboard/active-users')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('activeUsers').textContent = data.activeUsers;
+                })
+                .catch(error => console.error('Error fetching active users:', error));
         }
 
         // Check System Health
@@ -1171,32 +1170,6 @@
         window.showNotification = showNotification;
 
         /*]]>*/
-
-        function updateActiveUsers() {
-            fetch('/dashboard/active-users')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('activeUsers').textContent = data.activeUsers;
-                })
-                .catch(error => console.error('Error fetching active users:', error));
-        }
-
-        // Call it every 10 seconds
-        setInterval(updateActiveUsers, 10000);
-
-        // Also call it on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            updateActiveUsers();
-            // ... existing code ...
-        });
-
-        function updateDashboardMetrics(data) {
-            // ... existing code ...
-
-            // Also refresh active users
-            updateActiveUsers();
-        }
-
     </script>
 </body>
 

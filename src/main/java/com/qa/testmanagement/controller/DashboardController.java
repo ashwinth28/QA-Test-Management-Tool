@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -41,6 +42,9 @@ public class DashboardController {
 
         @Autowired
         private ActiveUserService activeUserService;
+
+        // Track application start time - UPTIME
+        private static final LocalDateTime APPLICATION_START_TIME = LocalDateTime.now();
 
         @GetMapping("/")
         public String index() {
@@ -85,6 +89,9 @@ public class DashboardController {
                 List<Object[]> dailyExecutions = executionRepository.getDailyExecutionCount(
                                 startDate, LocalDateTime.now());
 
+                // Calculate uptime
+                String uptime = formatUptime(Duration.between(APPLICATION_START_TIME, LocalDateTime.now()));
+
                 model.addAttribute("totalTestCases", totalTestCases);
                 model.addAttribute("passedTests", passedTests);
                 model.addAttribute("failedTests", failedTests);
@@ -98,6 +105,7 @@ public class DashboardController {
                 model.addAttribute("lastUpdated",
                                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 model.addAttribute("activeUsers", activeUserService.getActiveUserCount());
+                model.addAttribute("uptime", uptime); // ADD UPTIME TO MODEL
 
                 // Trigger a dashboard update via WebSocket (using the service)
                 updateService.sendDashboardUpdate();
@@ -215,6 +223,36 @@ public class DashboardController {
                 }
 
                 return health;
+        }
+
+        @GetMapping("/dashboard/uptime")
+        @ResponseBody
+        public Map<String, Object> getUptime() {
+                Map<String, Object> response = new HashMap<>();
+                Duration uptimeDuration = Duration.between(APPLICATION_START_TIME, LocalDateTime.now());
+                String uptimeFormatted = formatUptime(uptimeDuration);
+                response.put("uptime", uptimeFormatted);
+                response.put("seconds", uptimeDuration.getSeconds());
+                response.put("startTime", APPLICATION_START_TIME.toString());
+                response.put("timestamp", LocalDateTime.now().toString());
+                return response;
+        }
+
+        private String formatUptime(Duration duration) {
+                long days = duration.toDays();
+                long hours = duration.toHours() % 24;
+                long minutes = duration.toMinutes() % 60;
+                long seconds = duration.getSeconds() % 60;
+
+                if (days > 0) {
+                        return String.format("%dd %dh %dm", days, hours, minutes);
+                } else if (hours > 0) {
+                        return String.format("%dh %dm", hours, minutes);
+                } else if (minutes > 0) {
+                        return String.format("%dm %ds", minutes, seconds);
+                } else {
+                        return String.format("%ds", seconds);
+                }
         }
 
         @GetMapping("/dashboard/widgets/recent-executions")
