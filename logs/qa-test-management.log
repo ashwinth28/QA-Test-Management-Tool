@@ -881,3 +881,13 @@ Caused by: java.util.concurrent.RejectedExecutionException: Task org.springframe
 2026-04-02 03:50:11 [http-nio-8080-exec-3] INFO  c.q.t.controller.TestCaseController - ====================================================
 2026-04-02 03:50:13 [http-nio-8080-exec-3] INFO  c.q.t.controller.TestCaseController - Screenshot uploaded: /uploads/2026/04/02/421decec-c73f-4466-be95-c28fbabc6808.png
 2026-04-02 03:50:59 [MessageBroker-2] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 1 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(1)-CONNECTED(1)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 12, active threads = 0, queued tasks = 0, completed tasks = 12], outboundChannel[pool size = 2, active threads = 0, queued tasks = 0, completed tasks = 2], sockJsScheduler[pool size = 8, active threads = 1, queued tasks = 1, completed tasks = 9]
+2026-04-02 03:51:54 [File Watcher] INFO  o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 0 deletions, 1 modification)
+2026-04-02 03:51:54 [Thread-17] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopping...
+2026-04-02 03:51:54 [Thread-17] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6763fe29]]
+2026-04-02 03:51:54 [Thread-17] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopped.
+2026-04-02 03:51:54 [Thread-17] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-02 03:51:54 [Thread-17] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown initiated...
+2026-04-02 03:51:54 [Thread-17] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown completed.
+2026-04-02 03:51:54 [restartedMain] INFO  c.q.t.TestmanagementApplication - Starting TestmanagementApplication using Java 17.0.17 with PID 30852 (C:\Program Files\QA Test Management - Project\testmanagement\target\classes started by Antony in C:\Program Files\QA Test Management - Project\testmanagement)
+2026-04-02 03:51:54 [restartedMain] DEBUG c.q.t.TestmanagementApplication - Running with Spring Boot v3.2.1, Spring v6.1.2
+2026-04-02 03:51:54 [restartedMain] INFO  c.q.t.TestmanagementApplication - The following 1 profile is active: "default"
